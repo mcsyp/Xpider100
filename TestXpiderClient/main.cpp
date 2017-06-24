@@ -1,10 +1,9 @@
 #include <QCoreApplication>
-#include  "serverxpider.h"
-#include <stdio.h>
+#include "xpiderclient.h"
 int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
-  ServerXpider server_xpider;
-  server_xpider.StartServer();
+  XpiderClient client;
+  client.ConnectToHost("127.0.0.1",XpiderClient::SERVER_PORT);
   return a.exec();
 }
