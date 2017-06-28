@@ -1,5 +1,5 @@
-#ifndef SERVERXPIDER_H
-#define SERVERXPIDER_H
+#ifndef ServerOpti_H
+#define ServerOpti_H
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QRunnable>
@@ -11,16 +11,16 @@
 #include <stdint.h>
 #include <vector>
 
-class ClientXpider;
-class ServerXpider : public QTcpServer
+class ClientOpti;
+class ServerOpti : public QTcpServer
 {
   Q_OBJECT
 public:
   static constexpr int SERVER_PORT= 8000;//this server works at this port.
   static constexpr int SERVER_MAX_THREADPOOL=150;
 
-  explicit ServerXpider(QObject *parent = 0);
-  virtual ~ServerXpider();
+  explicit ServerOpti(QObject *parent = 0);
+  virtual ~ServerOpti();
 
   //start the server
   int StartServer();
@@ -28,7 +28,7 @@ public:
   //stop and reset the server
   void ResetServer();
 
-  bool RemoveClient(ClientXpider* client);
+  bool RemoveClient(ClientOpti* client);
 
 public:
   /**************************************
@@ -105,11 +105,11 @@ protected:
 
 protected:
   QThreadPool threadpool_;//a threadpool for all xpiders
-  std::vector<ClientXpider*> clientlist_;//saves all clients
+  std::vector<ClientOpti*> clientlist_;//saves all clients
 };
 
-class ClientXpider : public QRunnable{
-  friend class ServerXpider;
+class ClientOpti : public QRunnable{
+  friend class ServerOpti;
 public:
   static constexpr int RX_TIMEOUT=1000;//jump if there no message for more than this msec
   static constexpr int RX_MAX_SIZE=128;
@@ -122,22 +122,20 @@ protected:
     RxStateProcessing=1, //processing a package
   };
   void RxProcess(uint8_t* data, int len);
-  void RxProcessPayload(ServerXpider::message_head * head, QByteArray & payload);
+  void RxProcessPayload(ServerOpti::message_head * head, QByteArray & payload);
 protected:
-  ServerXpider * server_;
+  ServerOpti * server_;
   qintptr socketDescriptor_;
 
   //rx buffer & message
   QByteArray rx_payload_;//rx queue, waiting to be processed
-  ServerXpider::message_head rx_message_head_;//rx message head
+  ServerOpti::message_head rx_message_head_;//rx message head
   enum RxState rx_state_;
   int rx_payload_len_;
   int rx_payload_size_;
 
   //tx buffer
   QByteArrayList tx_queue_;
-
-
 };
 
-#endif // SERVERXPIDER_H
+#endif // ServerOpti_H

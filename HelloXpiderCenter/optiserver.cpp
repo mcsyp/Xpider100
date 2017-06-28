@@ -1,15 +1,15 @@
-#include "serverxpider.h"
+#include "optiserver.h"
 #include <qdebug.h>
 #include <stdio.h>
 
 #define DEBUG 1
-ServerXpider::ServerXpider(QObject *parent) :QTcpServer(parent)
+ServerOpti::ServerOpti(QObject *parent) :QTcpServer(parent)
 {
 }
-ServerXpider::~ServerXpider(){
+ServerOpti::~ServerOpti(){
   ResetServer();
 }
-void ServerXpider::ResetServer(){
+void ServerOpti::ResetServer(){
   if(this->isListening()){
     //stop server and reset
     this->close();
@@ -19,7 +19,7 @@ void ServerXpider::ResetServer(){
   clientlist_.clear();
 }
 
-int ServerXpider::StartServer(){
+int ServerOpti::StartServer(){
   //step1. reset server
   ResetServer();
 
@@ -31,14 +31,14 @@ int ServerXpider::StartServer(){
   return this->serverPort();
 }
 
-void ServerXpider::incomingConnection(qintptr socket){
+void ServerOpti::incomingConnection(qintptr socket){
   printf("[Xpider] new client socket received %d\n",socket);
 
   //step1. call the base incomming socket
   //QTcpServer::incomingConnection(socket);
 
   //step2. init the socket
-  ClientXpider * xpider = new ClientXpider;
+  ClientOpti * xpider = new ClientOpti;
   xpider->socketDescriptor_ = socket;
   xpider->server_ = this;
   clientlist_.push_back(xpider);//save the xpider to client list
@@ -47,7 +47,7 @@ void ServerXpider::incomingConnection(qintptr socket){
   threadpool_.start(xpider);
 }
 
-int ServerXpider::FindMessageHead(uint8_t *rx_buffer, int rx_len, int out_list[],int out_size){
+int ServerOpti::FindMessageHead(uint8_t *rx_buffer, int rx_len, int out_list[],int out_size){
   int out_counter=0;
   if(out_list==NULL || out_size<=0){
     return 0;
@@ -63,7 +63,7 @@ int ServerXpider::FindMessageHead(uint8_t *rx_buffer, int rx_len, int out_list[]
   }
   return out_counter;
 }
-bool ServerXpider::CheckMessageHead(uint8_t * rx_buffer, int rx_len){
+bool ServerOpti::CheckMessageHead(uint8_t * rx_buffer, int rx_len){
   if(rx_buffer==NULL || rx_len<MAGIC_NUM_LEN){
     return false;
   }
@@ -73,7 +73,7 @@ bool ServerXpider::CheckMessageHead(uint8_t * rx_buffer, int rx_len){
              rx_buffer[3]==MAGIC_NUM4);
 }
 
-int ServerXpider::FillHead(uint16_t cmdid, uint16_t payload_len, uint8_t * buffer, int buffer_size){
+int ServerOpti::FillHead(uint16_t cmdid, uint16_t payload_len, uint8_t * buffer, int buffer_size){
   if(buffer==NULL || buffer_size<MESSAGE_HEAD_LEN){
     return 0;
   }
@@ -87,9 +87,9 @@ int ServerXpider::FillHead(uint16_t cmdid, uint16_t payload_len, uint8_t * buffe
   return sizeof(message_head);
 }
 
-bool ServerXpider::RemoveClient(ClientXpider *client){
+bool ServerOpti::RemoveClient(ClientOpti *client){
   for(auto iter=clientlist_.begin();iter!=clientlist_.end();++iter){
-    ClientXpider * item = *iter;
+    ClientOpti * item = *iter;
     if(item==client){
       clientlist_.erase(iter);
       return true;
@@ -98,7 +98,7 @@ bool ServerXpider::RemoveClient(ClientXpider *client){
   return false;
 }
 
-void ClientXpider::run(){
+void ClientOpti::run(){
   QTcpSocket socket;
   char rx_buffer[RX_MAX_SIZE];
 
@@ -140,7 +140,7 @@ void ClientXpider::run(){
   printf("[Xpider] client socket %d disconneceted\n",socketDescriptor_);
 }
 
-void ClientXpider::Reset(){
+void ClientOpti::Reset(){
   tx_queue_.clear();
   rx_payload_.clear();
 
@@ -149,7 +149,7 @@ void ClientXpider::Reset(){
   rx_payload_size_=0;
 }
 
-void ClientXpider::RxProcess(uint8_t *data, int len){
+void ClientOpti::RxProcess(uint8_t *data, int len){
   int i=0;
   while(i<len){
     uint8_t * current = data+i;
@@ -163,19 +163,19 @@ void ClientXpider::RxProcess(uint8_t *data, int len){
         break;
     case RxStateIdle:
         //step1. check if there is are head since this byte
-        if(i<=len-ServerXpider::MESSAGE_HEAD_LEN &&
-           ServerXpider::CheckMessageHead(current,ServerXpider::MAGIC_NUM_LEN)){
+        if(i<=len-ServerOpti::MESSAGE_HEAD_LEN &&
+           ServerOpti::CheckMessageHead(current,ServerOpti::MAGIC_NUM_LEN)){
 
           //step1.fill the head
            memcpy((uint8_t*)&rx_message_head_,current,sizeof(rx_message_head_));
-           rx_payload_size_ = rx_message_head_.len-ServerXpider::MESSAGE_HEAD_LEN;
+           rx_payload_size_ = rx_message_head_.len-ServerOpti::MESSAGE_HEAD_LEN;
            rx_payload_.clear();//clear the rx payload
 
            //step2.update  the state
            rx_state_ = RxStateProcessing;
 
            //step3. i jump to payload
-           delta = ServerXpider::MESSAGE_HEAD_LEN;
+           delta = ServerOpti::MESSAGE_HEAD_LEN;
         }
         break;
     }
@@ -190,7 +190,7 @@ void ClientXpider::RxProcess(uint8_t *data, int len){
     i=i+delta;
   }
 }
-void ClientXpider::RxProcessPayload(ServerXpider::message_head *head, QByteArray &payload){
+void ClientOpti::RxProcessPayload(ServerOpti::message_head *head, QByteArray &payload){
    printf("[%s,%d]cmdid=%d, len=%d, payload_size=%d, payload=%s\n",
           __FUNCTION__,__LINE__,
           head->cmdId,

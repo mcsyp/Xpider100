@@ -1,10 +1,10 @@
 #include <QCoreApplication>
-#include  "serverxpider.h"
+#include  "xpiderserver.h"
 #include <stdio.h>
 int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
-  ServerXpider server_xpider;
+  XpiderServer server_xpider;
   server_xpider.StartServer();
   return a.exec();
 }

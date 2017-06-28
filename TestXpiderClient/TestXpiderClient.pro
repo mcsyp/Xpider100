@@ -10,7 +10,10 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    xpiderclient.cpp
+    xpiderclient.cpp \
+    hdlc_qt.cpp \
+    xpider_ctl/xpider_info.cpp \
+    xpider_ctl/xpider_protocol.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -24,4 +27,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
-    xpiderclient.h
+    xpiderclient.h \
+    hdlc_qt.h \
+    xpider_ctl/xpider_info.h \
+    xpider_ctl/xpider_linked_list.h \
+    xpider_ctl/xpider_protocol.h

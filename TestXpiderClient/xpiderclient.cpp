@@ -1,5 +1,10 @@
 #include "xpiderclient.h"
 #include <QHostAddress>
+#include <time.h>
+#include <xpider_ctl/xpider_protocol.h>
+#include <xpider_ctl/xpider_info.h>
+
+#include <stdint.h>
 
 XpiderClient::XpiderClient(QObject *parent) : QObject(parent)
 {
@@ -12,6 +17,10 @@ XpiderClient::XpiderClient(QObject *parent) : QObject(parent)
   connect(&socket_,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
 
   connect(&timer_retry_,SIGNAL(timeout()),this, SLOT(onRetryTimeout()));
+  connect(&timer_hb_,SIGNAL(timeout()),this,SLOT(onHBTimer()));
+
+  connect(&hdlc_encoder_,SIGNAL(hdlcTransmitByte(QByteArray)),this,SLOT(onHdlcTransmitByte(QByteArray)));
+  connect(&hdlc_encoder_,SIGNAL(hdlcValidFrameReceived(QByteArray,quint16)),this, SLOT(onHdlcValidFrameReceived(QByteArray,quint16)));
 }
 
 void XpiderClient::ConnectToHost(QString address, int port){
@@ -24,31 +33,17 @@ void XpiderClient::ConnectToHost(QString address, int port){
 void XpiderClient::onDisconnected(){
   qDebug()<<tr("Server fucking disconnected.");
   timer_retry_.start(CLIENT_RETRY_INTERVAL);
+  timer_hb_.stop();
 }
 
 void XpiderClient::onConnected(){
   qDebug()<<tr("Connected to server.");
 
-  QString message = "Hello fucking server!";
-  SendMessage(SERVER_LOG_REQ,message.toUtf8().data(),message.length()+1);
+  //started test cases
+  TestCase1();
 
-  TestCase0();
-  //socket_.write("hello fucker server?!");
   timer_retry_.stop();
-}
-
-int XpiderClient::FillHead(uint16_t cmdid, uint16_t payload_len, uint8_t * buffer, int buffer_size){
-  if(buffer==NULL || buffer_size<MESSAGE_HEAD_LEN){
-    return 0;
-  }
-  message_head * temp_ptr = (message_head*)buffer;
-  temp_ptr->cmdId = cmdid;
-  temp_ptr->len = MESSAGE_HEAD_LEN + payload_len;
-  temp_ptr->magic_num1  = MAGIC_NUM1;
-  temp_ptr->magic_num2  = MAGIC_NUM2;
-  temp_ptr->magic_num3  = MAGIC_NUM3;
-  temp_ptr->magic_num4  = MAGIC_NUM4;
-  return sizeof(message_head);
+  timer_hb_.start(3000);
 }
 
 void XpiderClient::onRetryTimeout(){
@@ -56,48 +51,57 @@ void XpiderClient::onRetryTimeout(){
   socket_.connectToHost(host_address_,host_port_);
 }
 
+void XpiderClient::onHBTimer(){
+  qDebug()<<tr("heart beat to xpider");
+  socket_.write(QString("fuck it! move!").toUtf8());
+}
 
 void XpiderClient::onReadyRead(){
   int len = socket_.bytesAvailable();
-  qDebug()<<tr("%1 bytes available").arg(len);
-  const int max_size=1024;
-  char data[max_size];
-  socket_.read(data,max_size);
-  qDebug()<<tr("message:%1").arg(QString(data));
+  //qDebug()<<tr("[%1,%2] %3 bytes available").arg(__FUNCTION__).arg(__LINE__).arg(len);
+  const int rx_size=1024;
+  QByteArray rx_payload = socket_.read(rx_size);
+  rx_payload.remove(0,2);
+  hdlc_encoder_.charReceiver(rx_payload);
 }
+void XpiderClient::onTimeoutSingle(){
 
-void XpiderClient::SendMessage(int cmdid, char *buffer, int buffer_len){
-  char head[MESSAGE_HEAD_LEN];
-  //step1. prepare the head
-  FillHead(cmdid,buffer_len,(uint8_t*)head,MESSAGE_HEAD_LEN);
-
-  //step2. assemble the pack
-  QByteArray array;
-  array.append(head,MESSAGE_HEAD_LEN);
-  if(buffer && buffer_len>0){
-    array.append(buffer,buffer_len);
-  }
-
-  //step3. send the pack
-  socket_.write(array);
 }
 
 void XpiderClient::TestCase0(){
-  QString pack_0 = "I will tell you something.";
-  QString pack_1 = "Fuck your ass!";
-  int test_len = pack_0.size()+pack_1.size();
-  qDebug()<<tr("test pack size %1").arg(test_len);
 
-  //step1. prepare the head
-  char head[MESSAGE_HEAD_LEN];
-  FillHead(SERVER_LOG_REQ,test_len,(uint8_t*)head,MESSAGE_HEAD_LEN);
+  QString str_message="Fuck you! Loser!";
+  str_message.append(QString("I'm %1").arg(socket_.localPort()));
+  QByteArray array = str_message.toUtf8();
+  hdlc_encoder_.frameDecode(array,array.size());
+  qDebug()<<tr("[%1,%2] Sending[%3]: %4")
+            .arg(__FUNCTION__).arg(__LINE__)
+            .arg(str_message.size())
+            .arg(str_message);
+}
+void XpiderClient::TestCase1(){
+  QByteArray tx_pack;
+  uint8_t* tx_buffer;
+  uint16_t tx_length;
+  XpiderInfo info;
+  XpiderProtocol  protocol;
+  protocol.Initialize(&info);
 
-  //step2. assemble the pack
-  QByteArray array;
-  array.append(head,MESSAGE_HEAD_LEN);
-  array.append(pack_0.toUtf8());
+  //step1.set target angle & transform to tx buffer
+  srand(time(NULL));
+  info.eye_angle=rand()%60;
+  protocol.GetBuffer(protocol.kEye,&tx_buffer,&tx_length);
 
-  //step3. send the pack
-  socket_.write(array);
-  socket_.write(pack_1.toUtf8());
+  //step2. set tx_pack
+  tx_pack.append((char*)tx_buffer,tx_length);
+  hdlc_encoder_.frameDecode(tx_pack,tx_length);
+}
+
+void XpiderClient::onHdlcTransmitByte(QByteArray encoded_data){
+  encoded_data.insert(0,QByteArray::fromHex("0155"));
+  socket_.write(encoded_data);
+}
+
+void XpiderClient::onHdlcValidFrameReceived(QByteArray decoded_data, quint16 frame_size){
+  qDebug()<<"rx_message:"<<decoded_data.toHex();
 }

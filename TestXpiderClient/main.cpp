@@ -4,6 +4,6 @@ int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
   XpiderClient client;
-  client.ConnectToHost("127.0.0.1",XpiderClient::SERVER_PORT);
+  client.ConnectToHost("192.168.8.104",80);
   return a.exec();
 }
