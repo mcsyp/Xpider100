@@ -136,8 +136,8 @@ bool HDLC_qt::hdlcFrameCRC_check(int frame_index)
     if(crc_received == crc_calculated) {
         return true;
     } else {
-        qDebug() << "wrong: " << QString::number(crc_received, 16) << ", " << QString::number(crc_calculated, 16);
-        qDebug() << "data: " << receive_frame_buffer.toHex();
+        //qDebug() << "wrong: " << QString::number(crc_received, 16) << ", " << QString::number(crc_calculated, 16);
+        //qDebug() << "data: " << receive_frame_buffer.toHex();
         return false;
     }
 }

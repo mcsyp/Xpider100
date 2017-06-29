@@ -10,7 +10,7 @@ XpiderClient::XpiderClient(QObject *parent) : QObject(parent)
 {
   QHostAddress address = QHostAddress::LocalHost;
   host_address_ = address.toString();
-  host_port_ = SERVER_PORT;
+  host_port_ = 80;
 
   connect(&socket_,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
   connect(&socket_,SIGNAL(connected()),this,SLOT(onConnected()));

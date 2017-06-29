@@ -1,10 +1,13 @@
 #include <QCoreApplication>
-#include  "xpiderserver.h"
+#include "xpiderpool.h"
+#include "optiserver.h"
 #include <stdio.h>
 int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
-  XpiderServer server_xpider;
-  server_xpider.StartServer();
+  XpiderPool server_xpider;
+  server_xpider.StartConnection();
+  OptiServer server_opti;
+  server_opti.StartServer();
   return a.exec();
 }

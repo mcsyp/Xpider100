@@ -11,7 +11,6 @@ public:
   static constexpr int CLIENT_RETRY_INTERVAL = 3000;//retry every 3 sec
   static constexpr int CLIENT_MESSAGE_INTERVAL = 1000;//retry every 3 sec
   static constexpr int CLIENT_MESSAGE_SIZE = 64;//retry every 3 sec
-  static constexpr int SERVER_PORT= 9000;//this server works at this port.
 
   explicit XpiderClient(QObject *parent = 0);
 
