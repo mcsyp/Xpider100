@@ -44,7 +44,6 @@ void XpiderClient::DisposeAllClients()
     if(xpider){
       xpider->is_running_=false;
       QThread::sleep(200);//wait for stop
-      delete xpider;
     }
   }
   g_xpider_list_.clear();
