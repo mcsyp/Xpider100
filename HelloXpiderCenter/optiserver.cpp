@@ -47,10 +47,8 @@ void OptiService::onNewConnection(){
 }
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
-  //printf("[%s,%d]cmd id:%d, payalod size:%d\n",__FILE__,__LINE__,cmdid,payload.size());
-  //qDebug()<<QString(payload);
-  printf("%s",QString(payload).toLatin1().data());
-  printf("\n");
+  printf("======cmd id:%d======\n",cmdid);
+  printf("%s\n",QString(payload).toLatin1().data());
 }
 
 void OptiService::onClientDisconnected(){
@@ -60,6 +58,5 @@ void OptiService::onClientDisconnected(){
 void OptiService::onClientReadyRead(){
   QByteArray rx_raw = client_->read(RX_MAX_SIZE);
   protocol_.PushToProtocol(rx_raw);
-  //printf("[%s,%d] rx_message length:%d\n",__FILE__,__LINE__,rx_raw.size());
 }
 
