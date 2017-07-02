@@ -12,15 +12,12 @@
 #include <vector>
 
 #include "xpiderhdlcencoder.h"
+#include "xpiderinstance.h"
 
-class XpiderClient : public QRunnable, public XpiderHdlcEncoderHandler{
+class XpiderSocket : public QRunnable, public XpiderHdlcEncoderHandler{
 protected:
-  XpiderClient();
+  XpiderSocket();
 public:
-  typedef std::vector<XpiderClient*> XpiderList;
-  static XpiderList g_xpider_list_;
-
-
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
 
@@ -29,9 +26,12 @@ public:
   static constexpr int RX_TIMEOUT=100;//jump if there no message for more than this msec
   static constexpr int RX_MAX_SIZE=128;
 
-  static XpiderClient* Create(QString host_name, int port);
-  static void RemoveInstance(XpiderClient* instance);
-  static void DisposeAllClients();//dispose all xpider clients.
+  static XpiderSocket* Create(QString host_name, int port, XpiderInstance * xpider);
+  static void Dispose(XpiderSocket* instance);
+  static void DisposeAll();//dispose all xpider clients.
+  static XpiderSocket* Search(uint32_t id);//search for xpider instance by id
+
+  virtual ~XpiderSocket();
 
   /*Run the xclient process in a seperate thread*/
   void run();
@@ -39,32 +39,42 @@ public:
   /*Reset the client*/
   void Reset();
 
+
+
+  /*xpider thread info message call back*/
+  virtual void onDecodedMessage(QByteArray &dec_message, quint16 dec_length);
+  virtual void onEncodedMessage(QByteArray & enc_message);
+
+  /*some customized actions for testing*/
+  void TestingAction();
+
   /*Purpose:append the message to tx_queue and send them later
    *input:
    * @tx_message, non-hdlc wrapped and non-0155 head included
    */
   void AppendTxMessage(QByteArray & tx_message);
+  uint32_t XpdierID() const{return xpider_id_;}
 
-  virtual void onDecodedMessage(QByteArray &dec_message, quint16 dec_length);
-  virtual void onEncodedMessage(QByteArray & enc_message);
-
-  void XpiderConnectedAction();
+public:
+  typedef std::map<uint32_t, XpiderSocket*> XpiderMap;
+  static XpiderMap g_xpider_map_;
 protected:
   void ConnectionRetry(int current_msec,QTcpSocket & socket);
-  void ConnectionHeartBeat(int current_msec, QTcpSocket & socket);
+  void ConnectionTxHeartBeat(int current_msec, QTcpSocket & socket);
 
 protected:
   //tx buffer
   QByteArrayList tx_queue_;
   QString host_name_;
   int host_port_;
+  uint32_t xpider_id_;
   bool is_running_;
 
 private:
   QTcpSocket * ptr_socket_;
   XpiderHdlcEncoder * ptr_hdlc_;
   QTime * ptr_time_;
-  bool is_alive_;
+  XpiderInstance * xpider_event_;
 };
 
 

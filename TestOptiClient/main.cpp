@@ -4,6 +4,6 @@ int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
   OptiClient client;
-  client.TryConnectToHost("192.168.1.7",8000);
+  client.TryConnectToHost("127.0.0.1",8000);
   return a.exec();
 }

@@ -9,25 +9,26 @@
 
 #include <stdint.h>
 #include <vector>
+#include <map>
 
 #include "xpiderhdlcencoder.h"
-#include "xpiderclient.h"
+#include "xpidersocket.h"
 
 class XpiderPool : public QObject
 {
   Q_OBJECT
 public:
-  //friend class XpiderClient;
-  static constexpr int MAX_THREADS=100;
+  static constexpr int MAX_THREADS=120;
 
   explicit XpiderPool(QObject *parent = 0);
   virtual ~XpiderPool();
 
   //start the server
-  void StartConnection();
+  Q_INVOKABLE void StartConnection();
 
   //stop and reset the server
-  void Reset();
+  Q_INVOKABLE void StopConnection();
+
 
 protected:
   QThreadPool threadpool_;//a threadpool for all xpiderss

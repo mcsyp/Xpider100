@@ -1,55 +1,72 @@
-#include "xpiderclient.h"
+#include "xpidersocket.h"
+#include "time.h"
 
 #include <QTcpSocket>
 #include <QTime>
 #include <QThread>
-#include <xpider_ctl/xpider_info.h>
-#include <xpider_ctl/xpider_linked_list.h>
-#include <xpider_ctl/xpider_protocol.h>
+#include <stdio.h>
+#include "xpider_ctl/xpider_info.h"
+#include "xpider_ctl/xpider_linked_list.h"
+#include "xpider_ctl/xpider_protocol.h"
 
 #define MESSAGE_HEAD "0155"
-const QByteArray XpiderClient::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
-XpiderClient::XpiderList XpiderClient::g_xpider_list_ = XpiderClient::XpiderList();
-XpiderClient::XpiderClient(){
+const QByteArray XpiderSocket::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
+XpiderSocket::XpiderMap XpiderSocket::g_xpider_map_ = XpiderSocket::XpiderMap();
+
+XpiderSocket::XpiderSocket(){
   ptr_socket_=NULL;
   ptr_time_ = NULL;
   ptr_hdlc_ = NULL;
+  xpider_id_= 0;
 }
-XpiderClient* XpiderClient::Create(QString host_name, int port){
+
+XpiderSocket* XpiderSocket::Create(QString host_name, int port,XpiderInstance* instance){
   if(host_name.size()==0 || port<=0)return NULL;
 
-  XpiderClient * client = new XpiderClient;
+  XpiderSocket * client = new XpiderSocket;
   client->host_name_ = host_name;
   client->host_port_ = port;
+  client->xpider_id_ = g_xpider_map_.size()+1;
+  client->xpider_event_ = instance;
 
-  g_xpider_list_.push_back(client);
+  g_xpider_map_[client->xpider_id_] = client;
 
   return client;
 }
 
-void XpiderClient::RemoveInstance(XpiderClient *instance){
-  for(auto iter=g_xpider_list_.begin();iter!=g_xpider_list_.end();++iter){
-    XpiderClient * xpider = *iter;
+void XpiderSocket::Dispose(XpiderSocket *instance){
+  for(auto iter = g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
+    XpiderSocket * xpider = iter->second;
     if(xpider==instance){
-      g_xpider_list_.erase(iter);
+      g_xpider_map_.erase(iter);
+      xpider->is_running_=false;
       break;
     }
   }
 }
 
-void XpiderClient::DisposeAllClients()
-{
-  for(auto iter=g_xpider_list_.begin();iter!=g_xpider_list_.end();++iter){
-    XpiderClient * xpider = *iter;
+void XpiderSocket::DisposeAll(){
+  for(auto iter=g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
+    XpiderSocket * xpider = iter->second;
     if(xpider){
       xpider->is_running_=false;
-      QThread::sleep(200);//wait for stop
     }
   }
-  g_xpider_list_.clear();
+  g_xpider_map_.clear();
+}
+XpiderSocket* XpiderSocket::Search(uint32_t id){
+  if(g_xpider_map_.count(id)){
+    return g_xpider_map_[id];
+  }else{
+    return NULL;
+  }
 }
 
-void XpiderClient::run(){
+XpiderSocket::~XpiderSocket(){
+  Dispose(this);
+}
+
+void XpiderSocket::run(){
   QTime time;
   QTcpSocket socket;
   XpiderHdlcEncoder hdlc_encoder(this);
@@ -58,16 +75,16 @@ void XpiderClient::run(){
   //step2.reset and conennect to server
   Reset();
   is_running_ = true;
-  is_alive_ = true;
   ptr_socket_ = &socket;
   ptr_hdlc_ = &hdlc_encoder;
   ptr_time_ = &time;
   time.start();
 
-  printf("[%s,%d] %s:%d xpider_thread startd\n",
+  printf("[%s,%d] %s:%d xpider_thread startd. Xpider ID:0x%x\n",
          __FUNCTION__,__LINE__,
          host_name_.toLatin1().data(),
-         host_port_);
+         host_port_,
+         xpider_id_);
 
   //step3. start loop event
   while(is_running_){
@@ -99,10 +116,11 @@ void XpiderClient::run(){
 
         //step3. task area
         //send heart beat to xpider.
-        ConnectionHeartBeat(time.elapsed(),socket);
+        ConnectionTxHeartBeat(time.elapsed(),socket);
 
         break;
     }
+    if(this->xpider_event_)this->xpider_event_->SocketStateUpdate(socket.state());
 
     QThread::yieldCurrentThread();
   }
@@ -112,18 +130,17 @@ void XpiderClient::run(){
     socket.disconnectFromHost();
     socket.waitForDisconnected(10000);
   }
-  RemoveInstance(this);
+  Dispose(this);
 
   printf("Xpider[%s] connection thread exit.\n",host_name_.toLatin1().data());
 }
 
-void XpiderClient::Reset(){
+void XpiderSocket::Reset(){
   tx_queue_.clear();
   is_running_ = false;
-  is_alive_ =false;
 }
 
-void XpiderClient::onDecodedMessage(QByteArray &dec_message, quint16 dec_length){
+void XpiderSocket::onDecodedMessage(QByteArray &dec_message, quint16 dec_length){
 #if 1
   if(dec_length) qDebug()<<"rx_message:"<<dec_message.toHex();
 #else
@@ -144,7 +161,7 @@ void XpiderClient::onDecodedMessage(QByteArray &dec_message, quint16 dec_length)
   is_alive_ = state;
 #endif
 }
-void XpiderClient::onEncodedMessage(QByteArray &enc_message){
+void XpiderSocket::onEncodedMessage(QByteArray &enc_message){
   QByteArray tx_payload;
   tx_payload.append(XPIDER_MESSAGE_HEAD);
   tx_payload.append(enc_message);
@@ -153,7 +170,7 @@ void XpiderClient::onEncodedMessage(QByteArray &enc_message){
   }
 }
 
-void XpiderClient::XpiderConnectedAction()
+void XpiderSocket::TestingAction()
 {
   QByteArray tx_pack;
   uint8_t* tx_buffer;
@@ -172,26 +189,30 @@ void XpiderClient::XpiderConnectedAction()
   if(ptr_hdlc_)ptr_hdlc_->hdlc_.frameDecode(tx_pack,tx_length);
 }
 
-void XpiderClient::ConnectionRetry(int current_msec, QTcpSocket &socket){
-  static int last_msec=0;
-  if(current_msec-last_msec<RETRY_INTERVAL){ return;}
+void XpiderSocket::AppendTxMessage(QByteArray &tx_message){
+  tx_queue_.push_back(tx_message);
+}
+
+void XpiderSocket::ConnectionRetry(int current_msec, QTcpSocket &socket){
+  static int retry_last_msec=0;
+  if(current_msec-retry_last_msec<RETRY_INTERVAL){ return;}
 
   if(socket.state()!=QTcpSocket::ConnectingState){
     socket.connectToHost(host_name_,host_port_);
     //printf("[%s,%d]Trying to connect to %s:%d\n",__FILE__,__LINE__,host_name_.toLatin1().data(),host_port_);
   }
   if(socket.waitForConnected(3000)){
-    XpiderConnectedAction();
+    TestingAction();
     printf("Xpider[%s] connected\n",host_name_.toLatin1().data());
   }
 
   //last step;
-  last_msec = current_msec;
+  retry_last_msec = current_msec;
 }
 
-void XpiderClient::ConnectionHeartBeat(int current_msec, QTcpSocket &socket){
-  static int last_msec=0;
-  if(current_msec-last_msec<HB_INTERVAL){ return;}
+void XpiderSocket::ConnectionTxHeartBeat(int current_msec, QTcpSocket &socket){
+  static int hb_last_msec=0;
+  if(current_msec-hb_last_msec<HB_INTERVAL){ return;}
 
   QByteArray payload;
 
@@ -201,7 +222,7 @@ void XpiderClient::ConnectionHeartBeat(int current_msec, QTcpSocket &socket){
   socket.write(payload);
 
   //last step;
-  last_msec = current_msec;
+  hb_last_msec = current_msec;
 }
 
 

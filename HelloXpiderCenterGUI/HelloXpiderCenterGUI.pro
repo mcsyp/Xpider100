@@ -1,24 +1,16 @@
-QT += core network
-QT -= gui
+QT += qml quick
 
 CONFIG += c++11
 
-TARGET = HelloXpiderCenter
-CONFIG += console
-CONFIG -= app_bundle
+SOURCES += main.cpp
 
-TEMPLATE = app
+RESOURCES += qml.qrc
 
-SOURCES += main.cpp \
-    hdlc_qt.cpp \
-    xpiderhdlcencoder.cpp \
-    xpider_ctl/xpider_info.cpp \
-    xpider_ctl/xpider_protocol.cpp \
-    xpiderpool.cpp \
-    optiserver.cpp \
-    optiprotocol.cpp \
-    xpiderinstance.cpp \
-    xpidersocket.cpp
+# Additional import path used to resolve QML modules in Qt Creator's code model
+QML_IMPORT_PATH =
+
+# Additional import path used to resolve QML modules just for Qt Quick Designer
+QML_DESIGNER_IMPORT_PATH =
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -31,15 +23,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-HEADERS += \
-    hdlc_qt.h \
-    xpiderhdlcencoder.h \
-    xpider_ctl/xpider_info.h \
-    xpider_ctl/xpider_protocol.h \
-    xpider_ctl/xpider_linked_list.h \
-    xpiderpool.h \
-    optiserver.h \
-    optiprotocol.h \
-    global_xpier.h \
-    xpiderinstance.h \
-    xpidersocket.h
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
