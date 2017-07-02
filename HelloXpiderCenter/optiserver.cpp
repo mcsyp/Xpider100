@@ -48,8 +48,8 @@ void OptiService::onNewConnection(){
 }
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
-  printf("======cmd id:%d======\n",cmdid);
-  printf("%s\n",QString(payload).toLatin1().data());
+  //printf("======cmd id:%d======\n",cmdid);
+  //printf("%s\n",QString(payload).toLatin1().data());
   std::vector<xpider_opti_t> opti_info_list;
   opti_info_list.clear();
 
@@ -70,6 +70,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
 
       //save to list
       opti_info_list.push_back(opti_info);
+      printf("[%s,%d] %.2f,%.2f,%.2f\n",__FILE__,__LINE__,opti_info.theta,opti_info.x,opti_info.y);
       emit xpiderUpdate(i,opti_info.theta,opti_info.x,opti_info.y);
     }
     //step1.call tracing processor

@@ -2,7 +2,16 @@ QT += qml quick
 
 CONFIG += c++11
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    ../HelloXpiderCenter/hdlc_qt.cpp \
+    ../HelloXpiderCenter/optiprotocol.cpp \
+    ../HelloXpiderCenter/optiserver.cpp \
+    ../HelloXpiderCenter/xpiderhdlcencoder.cpp \
+    ../HelloXpiderCenter/xpiderpool.cpp \
+    ../HelloXpiderCenter/xpider_ctl/xpider_info.cpp \
+    ../HelloXpiderCenter/xpider_ctl/xpider_protocol.cpp \
+    ../HelloXpiderCenter/xpidersocket.cpp \
+    ../HelloXpiderCenter/xpiderinstance.cpp
 
 RESOURCES += qml.qrc
 
@@ -27,3 +36,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+INCLUDEPATH+="../HelloXpdierCenter"
+INCLUDEPATH+="../HelloXpdierCenter/xpider_ctl"
+
+HEADERS += \
+    ../HelloXpiderCenter/global_xpier.h \
+    ../HelloXpiderCenter/hdlc_qt.h \
+    ../HelloXpiderCenter/optiprotocol.h \
+    ../HelloXpiderCenter/optiserver.h \
+    ../HelloXpiderCenter/xpiderhdlcencoder.h \
+    ../HelloXpiderCenter/xpiderpool.h \
+    ../HelloXpiderCenter/xpider_ctl/xpider_info.h \
+    ../HelloXpiderCenter/xpider_ctl/xpider_linked_list.h \
+    ../HelloXpiderCenter/xpider_ctl/xpider_protocol.h \
+    ../HelloXpiderCenter/xpidersocket.h \
+    ../HelloXpiderCenter/xpiderinstance.h
+
+DISTFILES += \
+    main.qml

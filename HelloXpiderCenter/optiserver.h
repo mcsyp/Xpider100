@@ -28,7 +28,8 @@ public:
   void StopServer();
 
 signals:
-  void xpiderUpdate(int index,float theta, float x,float y);
+  Q_INVOKABLE void xpiderUpdate(int index,float theta, float x,float y);
+
 protected slots:
   void onClientDisconnected();
   void onClientReadyRead();

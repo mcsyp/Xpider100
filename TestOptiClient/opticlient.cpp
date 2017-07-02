@@ -36,7 +36,7 @@ void OptiClient::onRetryTimeout(){
 void OptiClient::onMessageTimeout(){
   QByteArray tx_buffer;
   uint8_t head_buffer[64];
-  QString tx_message="Fuck you bro!";
+  QString tx_message="0.12,0.02,0.03\n1.72,0.06,0.02\n";
   int head_len = protocol_.FillHead(0x9,tx_message.size(),head_buffer,64);
 
   tx_buffer.append((char*)head_buffer,head_len);
