@@ -11,7 +11,7 @@ class OptiClient: public QTcpSocket
 public:
 
   static constexpr int TIMEOUT_RETRY=2000;
-  static constexpr int TIMEOUT_MESSAGE=1000;
+  static constexpr int TIMEOUT_MESSAGE=3000;
 
   OptiClient(QObject* parent=NULL);
 

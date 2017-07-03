@@ -14,6 +14,7 @@ void XpiderPool::StopConnection(){
   XpiderSocket::DisposeAll();
   //step2.clear the threadpool
   threadpool_.clear();
+  emit xpiderStoped();
 }
 
 void XpiderPool::StartConnection(){
@@ -39,5 +40,7 @@ void XpiderPool::StartConnection(){
     XpiderSocket * x0 = XpiderSocket::Create(host_list[i],host_port,NULL);
     threadpool_.start(x0);
   }
+
+  emit xpiderStarted();
   printf("[%s,%d] %d xpider_threads created.\n",__FUNCTION__,__LINE__,XpiderSocket::g_xpider_map_.size());
 }

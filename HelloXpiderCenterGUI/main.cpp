@@ -10,16 +10,19 @@ int main(int argc, char *argv[])
   QGuiApplication app(argc, argv);
 
   XpiderPool pool;
-  pool.StartConnection();
+  OptiService opti;
 
-  OptiService opti_service;
-  opti_service.StartServer();
 
   QQmlApplicationEngine engine;
+
+  QQmlContext * ctx = engine.rootContext();
+  ctx->setContextProperty("opti_server_",&opti);
+  ctx->setContextProperty("xpider_center_",&pool);
+
   engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
-  engine.rootContext()->setContextProperty("xpider_opti_",&opti_service);
-  engine.rootContext()->setContextProperty("xpider_center_",&pool);
+  pool.StartConnection();
+  opti.StartServer();
 
   return app.exec();
 }

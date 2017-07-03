@@ -2,17 +2,32 @@
 #define SERVEROPTI_H
 #include <QByteArray>
 #include <QTcpServer>
+#include <QThread>
+#include <QTime>
 
 #include <stdint.h>
 #include <vector>
 
 #include "optiprotocol.h"
+#include "trajectoryplanner.h"
+class OptiPostWork: public QObject{
+  Q_OBJECT
+public:
+  explicit OptiPostWork(QObject* parent=NULL);
+
+protected slots:
+  void onXpiderPlannerUpdated();
+
+private:
+  //TrajectoryPlanner planner_;
+};
 
 class OptiService : public QTcpServer{
   Q_OBJECT
 public:
   static constexpr int SERVER_PORT= 8000;//this server works at this port.
   static constexpr int RX_MAX_SIZE= 4096;
+  static constexpr int INTERVAL_POST_TASK=5000;
 
   enum SERVER_CMDID {
     SERVER_UPLAOD_REQ=0x9,
@@ -28,7 +43,8 @@ public:
   void StopServer();
 
 signals:
-  Q_INVOKABLE void xpiderUpdate(int index,float theta, float x,float y);
+  void xpiderUpdate(unsigned int id,float theta, float x,float y);
+  void xpiderPlannerUpdate();
 
 protected slots:
   void onClientDisconnected();
@@ -40,6 +56,9 @@ protected slots:
 private:
   QTcpSocket *client_;
   OptiProtocol protocol_;
-
+  QTime time_;
+  int last_trigger_;
+  QThread worker_thread_;
+  OptiPostWork post_worker_;
 };
 #endif // ServerOpti_H

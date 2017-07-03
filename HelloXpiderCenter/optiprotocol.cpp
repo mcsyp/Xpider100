@@ -31,6 +31,9 @@ void OptiProtocol::PushToProtocol(QByteArray & raw_data){
 
           //step1.fill the head
            memcpy((uint8_t*)&rx_message_head_,current,sizeof(rx_message_head_));
+           if(rx_message_head_.len>MAX_MESSAGE_LEN){
+             break;
+           }
 #if 0
            do{
             printf("[%s,%d]cmdid:%d,len:%d\n",__FUNCTION__,__LINE__,rx_message_head_.cmdId,rx_message_head_.len);
@@ -57,6 +60,7 @@ void OptiProtocol::PushToProtocol(QByteArray & raw_data){
       //check if a package is full
       emit PayloadReady(rx_message_head_.cmdId,rx_payload_);
       rx_state_ = RxStateIdle;
+      rx_payload_.clear();
     }
 
     //increase

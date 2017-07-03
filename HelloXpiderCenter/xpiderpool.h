@@ -20,6 +20,7 @@ class XpiderPool : public QObject
 public:
   static constexpr int MAX_THREADS=120;
 
+
   explicit XpiderPool(QObject *parent = 0);
   virtual ~XpiderPool();
 
@@ -29,6 +30,9 @@ public:
   //stop and reset the server
   Q_INVOKABLE void StopConnection();
 
+signals:
+  void xpiderStarted();
+  void xpiderStoped();
 
 protected:
   QThreadPool threadpool_;//a threadpool for all xpiderss

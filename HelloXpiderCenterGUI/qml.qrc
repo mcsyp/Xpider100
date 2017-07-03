@@ -3,5 +3,11 @@
         <file>qtquickcontrols2.conf</file>
         <file>main.qml</file>
         <file>Playground.qml</file>
+        <file>Xpider.qml</file>
+        <file>images/startbtn_idle_frame.png</file>
+        <file>images/startbtn_idle.png</file>
+        <file>images/startbtn_running_frame.png</file>
+        <file>images/startbtn_running.png</file>
+        <file>images/xpider_icon.png</file>
     </qresource>
 </RCC>
