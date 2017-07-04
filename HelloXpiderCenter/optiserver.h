@@ -58,7 +58,6 @@ signals:
   void xpiderUpdate(unsigned int id,float theta, float x,float y,bool is_real=false);
   void landmarkUpdate(unsigned int id,float x,float y);
   void xpiderPlannerUpdate();
-  void xpiderClear();
 
 protected slots:
   void onClientDisconnected();

@@ -144,11 +144,6 @@ Rectangle {
                 cross_queue_[id].y = screen_y;
             }
         }
-        onXpiderClear:{
-            for(var i=0;i<max_xpider_num;++i){
-                xpider_queue_[i].visible=false;
-            }
-        }
     }
     Connections{
         target: xpider_center_
