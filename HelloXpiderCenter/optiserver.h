@@ -10,6 +10,7 @@
 
 #include "optiprotocol.h"
 #include "trajectoryplanner.h"
+#include "xpider_location.h"
 class OptiPostWork: public QObject{
   Q_OBJECT
 public:
@@ -26,7 +27,7 @@ class OptiService : public QTcpServer{
   Q_OBJECT
 public:
   static constexpr int SERVER_PORT= 8000;//this server works at this port.
-  static constexpr int RX_MAX_SIZE= 4096;
+  static constexpr int RX_MAX_SIZE= 80;
   static constexpr int INTERVAL_POST_TASK=5000;
 
   enum SERVER_CMDID {
@@ -60,5 +61,6 @@ private:
   int last_trigger_;
   QThread worker_thread_;
   OptiPostWork post_worker_;
+  XpiderLocation *xpider_location_;
 };
 #endif // ServerOpti_H

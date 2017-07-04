@@ -6,6 +6,7 @@ typedef struct xpider_opti_s{        //xpider info from optitrac
     float theta;                     //[-pi, pi]
     float x;                         //in meter
     float y;                         //in meter
+    int loose_count;
 }xpider_opti_t;
 
 typedef struct xpider_tp_s{          //输出的结构体

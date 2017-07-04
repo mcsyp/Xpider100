@@ -14,10 +14,17 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   post_worker_.moveToThread(&worker_thread_);
   connect(this,SIGNAL(xpiderPlannerUpdate()),&post_worker_,SLOT(onXpiderPlannerUpdated()));
   time_.start();
+  worker_thread_.start();
+
+  xpider_location_=NULL;
 }
 OptiService::~OptiService(){
   StopServer();
+  worker_thread_.quit();
+  worker_thread_.wait();
+  if(xpider_location_)delete xpider_location_;
 }
+
 void OptiService::StopServer(){
   //reset client
   if(client_)client_->disconnectFromHost();
@@ -40,6 +47,11 @@ int OptiService::StartServer(){
   //step2. start listening
   this->listen(QHostAddress::Any,SERVER_PORT);
   printf("[%s,%d] Opti server started on %d\n",__FUNCTION__,__LINE__,SERVER_PORT);
+
+
+  xpider_location_ = new XpiderLocation();
+  xpider_location_->GenerateInitLocation(0,0,1,2);
+
   return this->serverPort();
 }
 
@@ -55,11 +67,11 @@ void OptiService::onNewConnection(){
 }
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
-  printf("[%s,%d]======cmd id:%d======\n",__FILE__,__LINE__,cmdid);
+  //printf("[%s,%d]======cmd id:%d======\n",__FILE__,__LINE__,cmdid);
   std::vector<xpider_opti_t> opti_info_list;
   std::vector<xpider_opti_t> xpider_info_list;
+  uint32_t id_list[2]={0,1};
   opti_info_list.clear();
-  xpider_info_list.clear();
 
   if(SERVER_UPLAOD_REQ==cmdid){
     QString message(payload);
@@ -71,22 +83,28 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
       QStringList value_list = record_line.split(',');
       if(value_list.size()<3)break;
       xpider_opti_t opti_info;
-      opti_info.theta = value_list[0].toFloat();
-      opti_info.x  = value_list[1].toFloat();
-      opti_info.y  = value_list[2].toFloat();
+      opti_info.x  = value_list[0].toFloat();
+      opti_info.y  = value_list[1].toFloat();
+      opti_info.theta = value_list[2].toFloat();
 
       //save to list
       opti_info_list.push_back(opti_info);
-      printf("[%s,%d] %f,%f,%f\n",__FILE__,__LINE__,opti_info.theta,opti_info.x,opti_info.y);
       //emit xpiderUpdate(i,opti_info.theta,opti_info.x,opti_info.y);
     }
+
     //step1.call tracing processor
     //TODO: call YE TIAN code
+    if(opti_info_list.size()){
+      xpider_info_list.clear();
+      //printf("[%s,%d] raw xpider size:%d\n",__FILE__,__LINE__,opti_info_list.size());
+      xpider_location_->GetRobotLocation(opti_info_list,id_list,2,xpider_info_list);
+      //step2. udpate UI
+      for(auto iter=xpider_info_list.begin();iter!=xpider_info_list.end();++iter){
+        xpider_opti_t info = *iter;
+        //printf("[%s,%d] %f,%f,%f\n",__FILE__,__LINE__,info.theta,info.x,info.y);
 
-    //step2. udpate UI
-    for(auto iter=opti_info_list.begin();iter!=opti_info_list.end();++iter){
-      xpider_opti_t info = *iter;
-      emit xpiderUpdate(info.id,info.theta,info.x,info.y);
+        emit xpiderUpdate(info.id,info.theta,info.x,info.y);
+      }
     }
 
     //step3. check if we need to update all xpiders' plan
@@ -104,13 +122,15 @@ void OptiService::onClientDisconnected(){
 }
 
 void OptiService::onClientReadyRead(){
+  if(client_==NULL)return;
   QByteArray rx_raw = client_->read(RX_MAX_SIZE);
   protocol_.PushToProtocol(rx_raw);
-  printf("[%s,%d]raw length:%d\n",__FILE__,__LINE__,rx_raw.size());
+  //printf("[%s,%d]raw length:%d\n",__FILE__,__LINE__,rx_raw.size());
 }
 
 OptiPostWork::OptiPostWork(QObject *parent):QObject(parent){}
 void OptiPostWork::onXpiderPlannerUpdated(){
+  //printf("[%s,%d]xpider planner is triggered\n",__FILE__,__LINE__);
   //step1.call trajectory planner
   //TODO: call XIAO BO code
 

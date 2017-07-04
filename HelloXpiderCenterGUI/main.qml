@@ -3,6 +3,7 @@ import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
 
 ApplicationWindow {
+    id:main_window_
     visible: true
     width:1200
     height:800
@@ -11,9 +12,11 @@ ApplicationWindow {
 
     Playground {
      id:playground_
-     width:parent.width
-     height:parent.width*2/3;
+     anchors.fill: parent
      anchors.centerIn: parent
+    }
+    onWidthChanged: {
+        main_window_.height = main_window_.width*2/3;
     }
 
     onClosing: {

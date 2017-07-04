@@ -14,7 +14,6 @@
  * included in all copies or substantial portions of the Software.
  */
 #include "xpider_protocol.h"
-
 // #define TEST_MODE
 
 #ifdef TEST_MODE
@@ -70,6 +69,15 @@ void XpiderProtocol::GetBuffer(const MessageType &index, uint8_t** send_buffer, 
       send_msg_buffer_[0] = kMove;
       send_msg_buffer_[1] = xpider_info_->move;
       send_msg_buffer_[2] = xpider_info_->rotate;
+
+      break;
+    }
+    case kStep: {
+      *length = 3;
+
+      send_msg_buffer_[0] = kStep;
+      send_msg_buffer_[1] = xpider_info_->count_speed;
+      send_msg_buffer_[2] = xpider_info_->count;
 
       break;
     }
@@ -251,6 +259,11 @@ XpiderProtocol::MessageType XpiderProtocol::GetMessage(const uint8_t *buffer, co
     case kMove: {
       xpider_info_->move = buffer[1];
       xpider_info_->rotate = buffer[2];
+      break;
+    }
+     case kStep: {
+      xpider_info_->count_speed = buffer[1];
+      xpider_info_->count = buffer[2];
       break;
     }
     case kAutoPilot: {

@@ -15,7 +15,6 @@
  */
 
 #include "xpider_info.h"
-// #include <Arduino.h>
 
 const char* XpiderInfo::kCustomDataFileName = "CustomData";
 const XpiderInfo::CustomData XpiderInfo::kInitializeCustomData = {
@@ -76,7 +75,7 @@ void XpiderInfo::ClearGroupList(int group_id) {
           break;
         }
         default: {
-          // Serial.println("Error: Clear Action Group info");
+          // LOG_PRINTLN("Error: Clear Action Group info");
           break;
         }
     	}
@@ -128,34 +127,27 @@ void XpiderInfo::GroupListAdd(int group_id, XpiderInfo::ActionIndex id, uint8_t 
       break;
     }
     default: {
-      // Serial.println("Error: add unknow type element");
+      // LOG_PRINTLN("Error: add unknow type element");
       break;
     }
   }
   action_group_list[group_id].add(temp);
 }
 
-bool XpiderInfo::ifActionCanRun(uint8_t id){
-  if(is_free == true ){
-    return true;
-  }else{
-    if(id != running_group_id){
-      return true;
-    }
-  }
-  return false;
+bool XpiderInfo::ifGroupCanRun(uint8_t group_id) {
+  return (is_free || (group_id!=running_group_id));
 }
 
 XpiderInfo::GroupElement * XpiderInfo::SetCurrentAction(uint8_t action_num, bool enable, uint32_t start_time)
 {
   if(enable == true){
     running_action_id = action_num;
-    // Serial.print("action_num = ");
-    // Serial.println(action_num);
-    // Serial.print("running_group_id = ");
-    // Serial.println(running_group_id);
-    // Serial.print("running_group_id.size = ");
-    // Serial.println(action_group_list[running_group_id].size());
+    // LOG_PRINT("action_num = ");
+    // LOG_PRINTLN(action_num);
+    // LOG_PRINT("running_group_id = ");
+    // LOG_PRINTLN(running_group_id);
+    // LOG_PRINT("running_group_id.size = ");
+    // LOG_PRINTLN(action_group_list[running_group_id].size());
 
     if(action_group_list[running_group_id].size() > 0 &&
        running_action_id < action_group_list[running_group_id].size()){
@@ -184,18 +176,18 @@ XpiderInfo::GroupElement * XpiderInfo::SetCurrentAction(uint8_t action_num, bool
           break;
         }
         default: {
-          // Serial.println("ERROR: Unknow action when doing the action!");
+          // LOG_PRINTLN("ERROR: Unknow action when doing the action!");
         }
       }
       action_status.is_enable = true;
       return temp;
     } else {
-      // Serial.println("Set Current Action, but action is empty, So no more actions in this group");
+      // LOG_PRINTLN("Set Current Action, but action is empty, So no more actions in this group");
       action_status.is_enable = false;
       return NULL;
     }
   }else{
-    // Serial.println("Set Current Action receive false");
+    // LOG_PRINTLN("Set Current Action receive false");
     action_status.is_enable = false;
     return NULL;
   }
@@ -219,8 +211,8 @@ void XpiderInfo::Count(){
   }else {
     action_status.time_counter -= 10;
   }
-  // Serial.print("timer = ");
-  // Serial.println(action_status.time_counter);
+  // LOG_PRINT("timer = ");
+  // LOG_PRINTLN(action_status.time_counter);
 }
 
 bool XpiderInfo::ifActionShouldStop(uint32_t current_time){

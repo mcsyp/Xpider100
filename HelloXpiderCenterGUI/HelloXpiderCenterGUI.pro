@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     ../HelloXpiderCenter/xpider_ctl/xpider_info.cpp \
     ../HelloXpiderCenter/xpider_ctl/xpider_protocol.cpp \
     ../HelloXpiderCenter/xpidersocket.cpp \
-    ../HelloXpiderCenter/xpiderinstance.cpp
+    ../HelloXpiderCenter/xpiderinstance.cpp \
+    ../HelloXpiderCenter/xpider_location.cpp
 
 RESOURCES += qml.qrc
 
@@ -51,7 +52,8 @@ HEADERS += \
     ../HelloXpiderCenter/xpider_ctl/xpider_linked_list.h \
     ../HelloXpiderCenter/xpider_ctl/xpider_protocol.h \
     ../HelloXpiderCenter/xpidersocket.h \
-    ../HelloXpiderCenter/xpiderinstance.h
+    ../HelloXpiderCenter/xpiderinstance.h \
+    ../HelloXpiderCenter/xpider_location.h
 
 DISTFILES += \
     main.qml

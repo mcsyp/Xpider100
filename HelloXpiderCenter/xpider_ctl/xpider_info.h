@@ -64,6 +64,8 @@ public:
 
   int8_t move;
   int8_t rotate;
+  int8_t count_speed;
+  uint8_t count;
 
   uint16_t obstacle_distance;
 
@@ -163,7 +165,7 @@ public:
   void GroupListAdd(int group_id, XpiderInfo::ActionIndex id, uint8_t *buffer);
   void ClearAllGroupList() ;
 
-  bool ifActionCanRun(uint8_t id);
+  bool ifGroupCanRun(uint8_t group_id);
   bool ifActionRunning();
   void Count();
   bool ifActionShouldStop(uint32_t current_time);

@@ -35,7 +35,7 @@ public:
   }message_head;
 #pragma pack()
   static constexpr int MESSAGE_HEAD_LEN = sizeof(message_head);
-  static constexpr int MAX_MESSAGE_LEN=10000;//more than this, give up and reset to idle
+  static constexpr int MAX_MESSAGE_LEN=5000;//more than this, give up and reset to idle
 
   explicit OptiProtocol(QObject* parent=0);
 

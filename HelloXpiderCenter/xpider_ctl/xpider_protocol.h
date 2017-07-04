@@ -26,6 +26,7 @@ public:
   enum MessageType {
     kHeartBeat,
     kMove,
+    kStep,
     kFrontLeds,
     kEye,
     kAutoPilot,
