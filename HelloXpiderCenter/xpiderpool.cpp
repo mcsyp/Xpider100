@@ -24,6 +24,7 @@ void XpiderPool::StartConnection(){
   printf("[%s,%d]starting connecting to xpiders.\n",__FUNCTION__,__LINE__);
 
   //step2.
+#if 0
   const int host_size=10;
   const char* host_list[]={"192.168.1.50",
                            "192.168.1.51",
@@ -35,6 +36,15 @@ void XpiderPool::StartConnection(){
                            "192.168.1.57",
                            "192.168.1.58",
                            "192.168.1.59"};
+#else
+  const int host_size=5;
+  const char* host_list[]={"192.168.1.50",
+                           "192.168.1.51",
+                           "192.168.1.52",
+                           "192.168.1.55",
+                           "192.168.1.12"};
+#endif
+
   const int host_port=80;
   for(int i=0;i<host_size;++i){
     XpiderSocket * x0 = XpiderSocket::Create(host_list[i],host_port,NULL);

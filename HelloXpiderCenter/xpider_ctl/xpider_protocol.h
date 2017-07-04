@@ -26,7 +26,6 @@ public:
   enum MessageType {
     kHeartBeat,
     kMove,
-    kStep,
     kFrontLeds,
     kEye,
     kAutoPilot,
@@ -37,7 +36,9 @@ public:
     kGetRegister,
     kUpdateRegister,
     kRegisterResponse,
-    kUnknown
+    kUnknown,
+    kStep,
+    kAutoMove,
   };
   
   enum RegIndex {

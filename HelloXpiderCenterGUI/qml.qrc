@@ -13,5 +13,9 @@
         <file>images/start.png</file>
         <file>images/stop_frame.png</file>
         <file>images/stop.png</file>
+        <file>images/target.png</file>
+        <file>Target.qml</file>
+        <file>Cross.qml</file>
+        <file>images/cross.png</file>
     </qresource>
 </RCC>

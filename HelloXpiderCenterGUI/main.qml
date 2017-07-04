@@ -23,19 +23,15 @@ ApplicationWindow {
         xpider_center_.StopConnection()
     }
 
+
     Button{
         id:start_btn_
-        text:"Start"
-        property bool is_active: false
+        text:"Stop"
         x:parent.width/2-start_btn_.width/2;
         y:parent.height-start_btn_.height-5
         onClicked: {
-            is_active = !is_active
-            if(is_active===false){
-                start_btn_.text = "Start"
-            }else{
-                start_btn_.text = "Stop"
-            }
+            playground_.resetAllTargets()
         }
     }
+
 }

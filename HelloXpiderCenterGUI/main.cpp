@@ -21,8 +21,8 @@ int main(int argc, char *argv[])
 
   engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
-  opti.StartServer();
   pool.StartConnection();
+  opti.StartServer();
 
   return app.exec();
 }

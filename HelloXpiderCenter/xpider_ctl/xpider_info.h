@@ -19,7 +19,8 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "xpider_linked_list.h"
+
+#include "linked_list.h"
 
 #define MAX_GROUP_NUM  64
 #define MAX_ACTION_NUM_IN_GROUP  64
@@ -66,6 +67,11 @@ public:
   int8_t rotate;
   int8_t count_speed;
   uint8_t count;
+
+  uint8_t rotate_speed;
+  float rotate_rad;
+  uint8_t walk_speed;
+  int8_t walk_step;
 
   uint16_t obstacle_distance;
 

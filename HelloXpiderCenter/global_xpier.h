@@ -3,10 +3,10 @@
 
 typedef struct xpider_opti_s{        //xpider info from optitrac
     uint32_t id;
-    float theta;                     //[-pi, pi]
+    uint8_t loose_count;
+    float theta;                     //[0, 2pi]
     float x;                         //in meter
     float y;                         //in meter
-    int loose_count;
 }xpider_opti_t;
 
 typedef struct xpider_tp_s{          //输出的结构体

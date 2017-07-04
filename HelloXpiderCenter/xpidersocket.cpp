@@ -6,7 +6,7 @@
 #include <QThread>
 #include <stdio.h>
 #include "xpider_ctl/xpider_info.h"
-#include "xpider_ctl/xpider_linked_list.h"
+#include "xpider_ctl/linked_list.h"
 #include "xpider_ctl/xpider_protocol.h"
 
 #define MESSAGE_HEAD "0155"
@@ -18,6 +18,7 @@ XpiderSocket::XpiderSocket(){
   ptr_time_ = NULL;
   ptr_hdlc_ = NULL;
   xpider_id_= 0;
+  last_alive_tiggered_ = 0;
 }
 
 XpiderSocket* XpiderSocket::Create(QString host_name, int port,XpiderInstance* instance){
@@ -26,7 +27,7 @@ XpiderSocket* XpiderSocket::Create(QString host_name, int port,XpiderInstance* i
   XpiderSocket * client = new XpiderSocket;
   client->host_name_ = host_name;
   client->host_port_ = port;
-  client->xpider_id_ = g_xpider_map_.size()+1;
+  client->xpider_id_ = g_xpider_map_.size();
   client->xpider_event_ = instance;
 
   g_xpider_map_[client->xpider_id_] = client;
@@ -78,6 +79,10 @@ void XpiderSocket::run(){
   ptr_socket_ = &socket;
   ptr_hdlc_ = &hdlc_encoder;
   ptr_time_ = &time;
+
+  is_alive_=false;
+  last_alive_tiggered_ = 0 ;
+
   time.start();
 
   printf("[%s,%d] %s:%d xpider_thread startd. Xpider ID:0x%x\n",
@@ -141,25 +146,13 @@ void XpiderSocket::Reset(){
 }
 
 void XpiderSocket::onDecodedMessage(QByteArray &dec_message, quint16 dec_length){
-#if 1
-  if(dec_length) qDebug()<<"rx_message:"<<dec_message.toHex();
-#else
-  static int last_msec=0;
-  static const int HB_TIMEOUT=10000;//10sec
-
+  //if(dec_length) qDebug()<<"rx_message:"<<dec_message.toHex();
+  static const int HB_TIMEOUT=5000;//10sec
   if(ptr_time_==NULL)return;
-
   int current_time = ptr_time_->elapsed();
-  bool state = ((current_time-last_msec)<HB_TIMEOUT);
-  last_msec = current_time;
-  if(state!=is_alive_){
-    printf("[%s,%d]xpider[%s] is %d\n",
-           __FUNCTION__,__LINE__,
-           host_name_.toLatin1().data(),
-           state);
-  }
+  bool state = ((current_time-last_alive_tiggered_)<HB_TIMEOUT);
+  last_alive_tiggered_ = current_time;
   is_alive_ = state;
-#endif
 }
 void XpiderSocket::onEncodedMessage(QByteArray &enc_message){
   QByteArray tx_payload;
@@ -180,13 +173,19 @@ void XpiderSocket::TestingAction()
   protocol.Initialize(&info);
 
   //step1.set target angle & transform to tx buffer
-  srand(time(NULL));
-  info.eye_angle=rand()%60;
-  protocol.GetBuffer(protocol.kEye,&tx_buffer,&tx_length);
+  // srand(time(NULL));
+  // info.eye_angle=rand()%60;
+  // protocol.GetBuffer(protocol.kEye,&tx_buffer,&tx_length);
+  info.rotate_speed = 70;
+  info.rotate_rad = -2.53;
+  info.walk_speed = 70;
+  info.walk_step = 3;
+  protocol.GetBuffer(protocol.kAutoMove, &tx_buffer, &tx_length);
 
   //step2. set tx_pack
   tx_pack.append((char*)tx_buffer,tx_length);
-  if(ptr_hdlc_)ptr_hdlc_->hdlc_.frameDecode(tx_pack,tx_length);
+  //if(ptr_hdlc_)ptr_hdlc_->hdlc_.frameDecode(tx_pack,tx_length);
+  AppendTxMessage(tx_pack);
 }
 
 void XpiderSocket::AppendTxMessage(QByteArray &tx_message){
@@ -202,7 +201,7 @@ void XpiderSocket::ConnectionRetry(int current_msec, QTcpSocket &socket){
     //printf("[%s,%d]Trying to connect to %s:%d\n",__FILE__,__LINE__,host_name_.toLatin1().data(),host_port_);
   }
   if(socket.waitForConnected(3000)){
-    TestingAction();
+    //TestingAction();
     printf("Xpider[%s] connected\n",host_name_.toLatin1().data());
   }
 

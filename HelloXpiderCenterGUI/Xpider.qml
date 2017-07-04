@@ -27,7 +27,7 @@ Item {
         id: xpider_id_txt_
         anchors.centerIn: parent
         text:dev_id
-        font.pixelSize: 10
+        font.pixelSize: 12
     }
 
     SpringAnimation{
@@ -71,6 +71,7 @@ Item {
             frame_scale_.running=true;
         }
     }
+
 
     MouseArea{
         anchors.fill:xpider_img_

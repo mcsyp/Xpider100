@@ -38,7 +38,9 @@ public:
 
   /*Reset the client*/
   void Reset();
-
+  bool IsRunning()const {return is_running_;}
+  bool IsAlive()const{return is_alive_;}
+  uint32_t Id()const{return xpider_id_;}
 
 
   /*xpider thread info message call back*/
@@ -58,6 +60,7 @@ public:
 public:
   typedef std::map<uint32_t, XpiderSocket*> XpiderMap;
   static XpiderMap g_xpider_map_;
+
 protected:
   void ConnectionRetry(int current_msec,QTcpSocket & socket);
   void ConnectionTxHeartBeat(int current_msec, QTcpSocket & socket);
@@ -69,12 +72,15 @@ protected:
   int host_port_;
   uint32_t xpider_id_;
   bool is_running_;
+  bool is_alive_;
 
 private:
   QTcpSocket * ptr_socket_;
   XpiderHdlcEncoder * ptr_hdlc_;
   QTime * ptr_time_;
   XpiderInstance * xpider_event_;
+  int last_alive_tiggered_;
+
 };
 
 

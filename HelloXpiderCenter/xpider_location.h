@@ -25,11 +25,11 @@ public:
 //    float y;                        //in meter
 //    float theta;                    //[0, 2pi]
 //  };
-
   struct Point{
     float x;
     float y;
   };
+  typedef std::vector<Point> LandmarkList;
 
 private:
   std::vector<Point> initialize_points_;
@@ -42,6 +42,7 @@ public:
   bool GetRobotLocation(std::vector<xpider_opti_t> & raw_info, uint32_t id_list[],
                         uint32_t id_len, std::vector<xpider_opti_t> &out_list);
   void GenerateInitLocation(float center_x, float center_y, uint8_t rows, uint8_t cols);
+  LandmarkList & Landmarks(){return initialize_points_;}
 };
 
 #endif // XPIDER_LOCATION_H

@@ -14,10 +14,12 @@
  * included in all copies or substantial portions of the Software.
  */
 #include "xpider_protocol.h"
-// #define TEST_MODE
 
+#ifdef ARDUINO
+#include "arduino_log.h"
 #ifdef TEST_MODE
 #include <Arduino.h>
+#endif
 #endif
 
 XpiderProtocol::XpiderProtocol() {
@@ -78,6 +80,17 @@ void XpiderProtocol::GetBuffer(const MessageType &index, uint8_t** send_buffer, 
       send_msg_buffer_[0] = kStep;
       send_msg_buffer_[1] = xpider_info_->count_speed;
       send_msg_buffer_[2] = xpider_info_->count;
+
+      break;
+    }
+    case kAutoMove: {
+      *length = 8;
+
+      send_msg_buffer_[0] = kAutoMove;
+      send_msg_buffer_[1] = xpider_info_->rotate_speed;
+      memcpy(&send_msg_buffer_[2], &xpider_info_->rotate_rad, 4);
+      send_msg_buffer_[6] = xpider_info_->walk_speed;
+      send_msg_buffer_[7] = static_cast<uint8_t>(xpider_info_->walk_step);
 
       break;
     }
@@ -243,7 +256,7 @@ XpiderProtocol::MessageType XpiderProtocol::GetMessage(const uint8_t *buffer, co
 
       memcpy(xpider_info_->yaw_pitch_roll, buffer+7, sizeof(float)*3);
 
-      xpider_info_->sound_level = buffer[19];
+      xpider_info_->sound_level = buffer[13];
       break;
     }
     case kEye: {
@@ -261,9 +274,16 @@ XpiderProtocol::MessageType XpiderProtocol::GetMessage(const uint8_t *buffer, co
       xpider_info_->rotate = buffer[2];
       break;
     }
-     case kStep: {
+    case kStep: {
       xpider_info_->count_speed = buffer[1];
       xpider_info_->count = buffer[2];
+      break;
+    }
+    case kAutoMove: {
+      xpider_info_->rotate_speed = buffer[1];
+      memcpy(&xpider_info_->rotate_rad, &buffer[2], 4);
+      xpider_info_->walk_speed = buffer[6];
+      xpider_info_->walk_step = static_cast<int8_t>(buffer[7]);
       break;
     }
     case kAutoPilot: {

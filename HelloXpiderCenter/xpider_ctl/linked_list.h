@@ -9,9 +9,8 @@
 	Released into the public domain.
 */
 
-
-#ifndef XPIDER_LINKED_LIST_
-#define XPIDER_LINKED_LIST_
+#ifndef LINKED_LIST_
+#define LINKED_LIST_
 
 #include <stddef.h>
 
@@ -157,7 +156,7 @@ ListNode<T>* LinkedList<T>::getNode(int index){
 		return current;
 	}
 
-    return NULL;
+	return NULL;
 }
 
 template<typename T>
@@ -307,7 +306,6 @@ T LinkedList<T>::remove(int index){
 	isCached = false;
 	return ret;
 }
-
 
 template<typename T>
 T LinkedList<T>::get(int index){

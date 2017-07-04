@@ -12,7 +12,8 @@ SOURCES += main.cpp \
     ../HelloXpiderCenter/xpider_ctl/xpider_protocol.cpp \
     ../HelloXpiderCenter/xpidersocket.cpp \
     ../HelloXpiderCenter/xpiderinstance.cpp \
-    ../HelloXpiderCenter/xpider_location.cpp
+    ../HelloXpiderCenter/xpider_location.cpp \
+    ../HelloXpiderCenter/trajectoryplanner.cpp
 
 RESOURCES += qml.qrc
 
@@ -49,11 +50,13 @@ HEADERS += \
     ../HelloXpiderCenter/xpiderhdlcencoder.h \
     ../HelloXpiderCenter/xpiderpool.h \
     ../HelloXpiderCenter/xpider_ctl/xpider_info.h \
-    ../HelloXpiderCenter/xpider_ctl/xpider_linked_list.h \
     ../HelloXpiderCenter/xpider_ctl/xpider_protocol.h \
     ../HelloXpiderCenter/xpidersocket.h \
     ../HelloXpiderCenter/xpiderinstance.h \
-    ../HelloXpiderCenter/xpider_location.h
+    ../HelloXpiderCenter/xpider_location.h \
+    ../HelloXpiderCenter/xpider_ctl/arduino_log.h \
+    ../HelloXpiderCenter/xpider_ctl/linked_list.h \
+    ../HelloXpiderCenter/trajectoryplanner.h
 
 DISTFILES += \
     main.qml
