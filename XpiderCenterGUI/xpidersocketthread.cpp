@@ -97,10 +97,11 @@ void XpiderSocketThread::onTimeoutRetry(){
 
 
 void XpiderSocketThread::onConnected(){
-
+  qDebug()<<tr("[%1,%2]xpider %3:%4 connected.").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
 }
 
 void XpiderSocketThread::onDisconnected(){
+  qDebug()<<tr("[%1,%2]xpider %3:%4 disconnected.").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
 }
 
 void XpiderSocketThread::onReadyRead(){

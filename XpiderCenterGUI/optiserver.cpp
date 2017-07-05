@@ -67,7 +67,7 @@ int OptiService::StartService(){
 
   //init xpider location
   xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,2,3);
+  xpider_location_->GenerateInitLocation(0,0,2,5);
   XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
   int count=0;
   for(auto iter=list.begin();iter!=list.end();++iter){
@@ -76,20 +76,20 @@ int OptiService::StartService(){
     ++count;
   }
 
-#if 1
   //step3. start some socket threads
   do{
-#if 0
-    const int host_size=5;
+    const int host_size=10;
     const char* host_list[]={"192.168.1.50",
-                           "192.168.1.51",
-                           "192.168.1.52",
-                           "192.168.1.55",
-                           "192.168.1.12"};
-#else
-    const int host_size=1;
-    const char* host_list[]={"127.0.0.1"};
-#endif
+                            "192.168.1.51",
+                            "192.168.1.52",
+                            "192.168.1.53",
+                            "192.168.1.54",
+                            "192.168.1.55",
+                            "192.168.1.56",
+                            "192.168.1.57",
+                            "192.168.1.58",
+                            "192.168.1.59"};
+
     const int host_port=9000;
     for(int i=0;i<host_size;++i){
       XpiderSocketThread * socket = XpiderSocketThread::Create();
@@ -100,7 +100,7 @@ int OptiService::StartService(){
       }
     }
   }while(0);
-#endif
+
 
   return this->serverPort();
 }
