@@ -17,7 +17,7 @@ protected slots:
   void onClientDisconnected();
 
 protected:
-  QTcpSocket soket_;
+  QTcpSocket* ptr_soket_;
 };
 
 
