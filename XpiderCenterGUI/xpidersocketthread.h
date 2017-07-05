@@ -26,15 +26,14 @@ public:
   static constexpr int RX_MAX_SIZE=128;
 
   static constexpr int MAX_THREADS=120;
-  static void Dispose(XpiderSocketThread* thread);
+  static void Dispose(uint32_t id);
   static void DisposeAll();
   static XpiderSocketThread* Socket(uint32_t id);
-  static XpiderSocketThread* Create();
+  static XpiderSocketThread* Create(QThread * work_thread);
 
   virtual ~XpiderSocketThread();
 
   void StartConnection(QString &host_name,int host_port);
-  void StopConnection();
 
   /*Purpose:append the message to tx_queue and send them later
    *input:
@@ -56,9 +55,8 @@ public slots:
   void onHdlcEncodedByte(QByteArray encoded_data);
 public:
   static XpiderMap g_xpider_map_;
-
 protected:
-  QThread work_thread_;
+
   QTimer timer_retry_;
   QTime time_clock_;
 

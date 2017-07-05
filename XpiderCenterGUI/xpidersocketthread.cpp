@@ -3,26 +3,16 @@
 #define MESSAGE_HEAD "0155"
 const QByteArray XpiderSocketThread::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
 XpiderSocketThread::XpiderMap XpiderSocketThread::g_xpider_map_ = XpiderSocketThread::XpiderMap();
-
-void XpiderSocketThread::Dispose(XpiderSocketThread *instance){
-  if(instance==NULL)return;
+void XpiderSocketThread::Dispose(uint32_t id){
   for(auto iter = g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
-    XpiderSocketThread * xpider = iter->second;
-    if(xpider==instance){
-      g_xpider_map_.erase(iter);
-      xpider->work_thread_.exit();
+    if(iter->first==id){
+      g_xpider_map_.erase(iter++);
       break;
     }
   }
 }
 
 void XpiderSocketThread::DisposeAll(){
-  for(auto iter=g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
-    XpiderSocketThread * xpider = iter->second;
-    if(xpider){
-      xpider->work_thread_.exit();
-    }
-  }
   g_xpider_map_.clear();
 }
 XpiderSocketThread* XpiderSocketThread::Socket(uint32_t id){
@@ -32,12 +22,17 @@ XpiderSocketThread* XpiderSocketThread::Socket(uint32_t id){
     return NULL;
   }
 }
-XpiderSocketThread* XpiderSocketThread::Create(){
+XpiderSocketThread* XpiderSocketThread::Create(QThread * work_thread){
   if(g_xpider_map_.size()>=MAX_THREADS)return NULL;
 
   XpiderSocketThread* xpider = new XpiderSocketThread();
+  //init id
   xpider->my_id_ = g_xpider_map_.size();
   g_xpider_map_[xpider->my_id_] = xpider;
+
+  //init event thread
+  xpider->moveToThread(work_thread);
+  work_thread->start();
   return xpider;
 }
 
@@ -50,14 +45,9 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(this,SIGNAL(connected()),this,SLOT(onConnected()));
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
   connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
-
-  this->moveToThread(&work_thread_);
 }
 XpiderSocketThread::~XpiderSocketThread(){
-  StopConnection();
-  work_thread_.deleteLater();
-  QThread::msleep(10);
-  Dispose(this);
+  Dispose(my_id_);
 }
 void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
   host_name_ = host_name;
@@ -68,15 +58,8 @@ void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
 
   is_alive_=false;
   last_alive_tiggered_=0;
-
-  work_thread_.start();
 }
 
-void XpiderSocketThread::StopConnection(){
-  disconnectFromHost();
-  timer_retry_.stop();
-  work_thread_.exit();
-}
 void XpiderSocketThread::SendMessage(QByteArray &raw_message){
   if(raw_message.size()){
     hdlc_.frameDecode(raw_message,raw_message.size());
@@ -109,7 +92,7 @@ void XpiderSocketThread::onReadyRead(){
   rx_data_ = read(RX_MAX_SIZE);
   if(rx_data_.size()==0)return;
 
-  qDebug()<<tr("[%1,%2]rx bytes:%3").arg(__FILE__).arg(__LINE__).arg(rx_data_.size());
+  //qDebug()<<tr("[%1,%2]rx bytes:%3").arg(__FILE__).arg(__LINE__).arg(rx_data_.size());
   hdlc_.charReceiver(rx_data_);
 }
 
@@ -128,5 +111,7 @@ void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   write(tx_payload);
 }
 bool XpiderSocketThread::Available() const{
-  return ((state()==ConnectedState) && is_alive_);
+  //return ((state()==ConnectedState) && is_alive_);
+  return (state()==ConnectedState);
+
 }

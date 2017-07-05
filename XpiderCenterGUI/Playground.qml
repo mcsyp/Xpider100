@@ -12,7 +12,7 @@ Rectangle {
     property var real_width_:3.0 //3 meter
     property var real_height_:2.0 //2 meter
 
-    property var selected_xpider_id_:-1
+    property var selected_xpider_index_:-1
     property var reset_pos_:-500
 
 
@@ -24,7 +24,6 @@ Rectangle {
                                                        {"x":reset_pos_,
                                                         "y":reset_pos_,
                                                         "dev_id":i,
-                                                        "playground":playground_,
                                                         "z":10,
                                                         "visible":false,});
                 xpider_queue_.push(dynamic_comp_);
@@ -59,35 +58,58 @@ Rectangle {
         }
     }
 
-    function childrenClicked(index){
-        //console.log("children:",index," selected")
-        for(var i=0;i<xpider_queue_.length;++i){
-            xpider_queue_[i].setSelected(i==index && !xpider_queue_[i].selected_);
-        }
-        if(index!=selected_xpider_id_){
-            selected_xpider_id_ = index;
-        }else{
-            selected_xpider_id_ = -1;
-        }
-        console.log("selected xpider index:",selected_xpider_id_)
-    }
 
     MouseArea{
         anchors.fill: parent
         onClicked: {
-            if(selected_xpider_id_>=0){
-                target_queue_[selected_xpider_id_].x = mouse.x
-                target_queue_[selected_xpider_id_].y = mouse.y
-                target_queue_[selected_xpider_id_].show();
+            var index = selectXpider(mouse.x,mouse.y)
+            if(index>=0){
+                if(xpider_queue_[index].selected_){
+                    selected_xpider_index_=index;
+                }else{
+                    selected_xpider_index_ = -1;
+                }
+                for(var i=0;i<xpider_queue_.length;++i){
+                    xpider_queue_[i].setSelected(i==index);
+                }
 
-                //push target to c++
-                var real_x = (mouse.x/playground_.width-0.5)*real_width_;
-                var real_y = (0.5-mouse.y/playground_.height)*real_height_;
-                opti_server_.pushTarget(selected_xpider_id_,real_x,real_y);
-                console.log("id:",selected_xpider_id_," x:",real_x," y:",real_y);
+            }else{
+                if(selected_xpider_index_>=0){
+                    var dev_id = xpider_queue_[selected_xpider_index_].dev_id;
+                    target_queue_[selected_xpider_index_].x = mouse.x
+                    target_queue_[selected_xpider_index_].y = mouse.y
+                    target_queue_[selected_xpider_index_].dev_id = dev_id;
+                    target_queue_[selected_xpider_index_].show();
+
+                    //push target to c++
+                    var real_x = (mouse.x/playground_.width-0.5)*real_width_;
+                    var real_y = (0.5-mouse.y/playground_.height)*real_height_;
+                    opti_server_.pushTarget(dev_id,real_x,real_y);
+                    console.log("selected target id:",dev_id," x:",real_x," y:",real_y);
+                }
             }
         }
     }
+    function selectXpider(x,y){
+        var min_dis=1000;
+        var min_index=0;
+        for(var i=0;i<xpider_queue_.length;++i){
+            var xpider = xpider_queue_[i];
+            var d = Math.abs(x-xpider.x)+Math.abs(y-xpider.y);
+            if(d<min_dis){
+                min_dis = d;
+                min_index=i;
+            }
+        }
+
+        //console.log("min_dis is:",min_dis);
+        if(min_dis<40 && xpider_queue_[min_index].dev_id>=0){
+            xpider_queue_[min_index].setSelected(!xpider_queue_[min_index].selected_);
+            return min_index;
+        }
+        return -1;
+    }
+
     Timer{
         id:timer
         interval: 1000
@@ -101,7 +123,7 @@ Rectangle {
                 var dy = (target_queue_[i].y-xpider_queue_[i].y)*(target_queue_[i].y-xpider_queue_[i].y);
                 var d = Math.sqrt(dx+dy);
                 if(d<50){
-                    opti_server_.removeTarget(i);
+                    opti_server_.removeTarget(xpider_queue_[i].dev_id);
                     target_queue_[i].x = reset_pos_;
                     target_queue_[i].y = reset_pos_;
                 }

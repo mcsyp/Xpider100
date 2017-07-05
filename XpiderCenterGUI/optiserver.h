@@ -81,6 +81,7 @@ private:
 
 
   std::vector<XpiderSocketThread*> socket_list_;
+  std::vector<QThread*> thread_list_;
 public:
   std::map<uint32_t,xpider_target_point_t> target_map_;
 };

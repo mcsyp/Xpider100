@@ -8,7 +8,6 @@ Item {
     property var xpider_selected_scale_:0.35
     property var world_x: 0
     property var world_y: 0
-    property var playground;
     Image{
         id:xpider_img_
         source:"images/spider.png"
@@ -71,14 +70,13 @@ Item {
             frame_scale_.running=true;
         }
     }
-
-
+/*
     MouseArea{
         anchors.fill:xpider_img_
         onClicked: {
             //setSelected(!selected_)
             playground.childrenClicked(xpider_item_.dev_id);
         }
-    }
+    }*/
 
 }

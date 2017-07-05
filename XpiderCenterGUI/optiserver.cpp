@@ -26,6 +26,14 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
 }
 OptiService::~OptiService(){
   StopService();
+  XpiderSocketThread::DisposeAll();
+
+  for(auto iter=thread_list_.begin();iter!=thread_list_.end();++iter){
+    QThread * thread = *iter;
+    thread->deleteLater();
+    QThread::msleep(10);
+  }
+
   worker_thread_.exit();
   worker_thread_.deleteLater();
   QThread::msleep(100);
@@ -67,7 +75,7 @@ int OptiService::StartService(){
 
   //init xpider location
   xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,2,5);
+  xpider_location_->GenerateInitLocation(0,0,5,2);
   XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
   int count=0;
   for(auto iter=list.begin();iter!=list.end();++iter){
@@ -90,15 +98,17 @@ int OptiService::StartService(){
                             "192.168.1.58",
                             "192.168.1.59"};
 
-    const int host_port=9000;
+    const int host_port=80;
+    QThread * thread = new QThread;
     for(int i=0;i<host_size;++i){
-      XpiderSocketThread * socket = XpiderSocketThread::Create();
+      XpiderSocketThread * socket = XpiderSocketThread::Create(thread);
       if(socket){
         QString name = host_list[i];
         socket->StartConnection(name,host_port);
         socket_list_.push_back(socket);
       }
     }
+    thread_list_.push_back(thread);
   }while(0);
 
 

@@ -7,7 +7,7 @@
 
 #define ROBOT_LOOSE_FRAME_COUNT 30
 #define MARKER_MAX_DISTANCE 0.055f
-#define ROBOT_PLACE_WIDTH 0.15
+#define ROBOT_PLACE_WIDTH 0.2
 
 class XpiderLocation {
 public:
