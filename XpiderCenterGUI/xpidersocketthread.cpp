@@ -1,4 +1,9 @@
 #include "xpidersocketthread.h"
+#include "xpider_ctl/xpider_info.h"
+#include "xpider_ctl/linked_list.h"
+#include "xpider_ctl/xpider_protocol.h"
+
+#include <time.h>
 
 #define MESSAGE_HEAD "0155"
 const QByteArray XpiderSocketThread::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
@@ -81,6 +86,27 @@ void XpiderSocketThread::onTimeoutRetry(){
 
 void XpiderSocketThread::onConnected(){
   qDebug()<<tr("[%1,%2]xpider %3:%4 connected.").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
+
+  QByteArray tx_pack;
+  uint8_t* tx_buffer;
+  uint16_t tx_length;
+  XpiderInfo info;
+  XpiderProtocol  protocol;
+  protocol.Initialize(&info);
+
+  //step1.set target angle & transform to tx buffer
+  srand(time(NULL));
+  //uint8_t color = rand()%255;
+  info.left_led_rgb[0]=0;
+  info.left_led_rgb[1]=113;
+  info.left_led_rgb[2]=197;
+  info.left_led_rgb[3]=0;
+  info.left_led_rgb[4]=113;
+  info.left_led_rgb[5]=197;
+
+  protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
+  tx_pack.append((char*)tx_buffer,tx_length);
+  SendMessage(tx_pack);
 }
 
 void XpiderSocketThread::onDisconnected(){
