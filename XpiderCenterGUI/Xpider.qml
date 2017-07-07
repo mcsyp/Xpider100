@@ -10,7 +10,7 @@ Item {
     property var world_y: 0
     Image{
         id:xpider_img_
-        source:"images/spider.png"
+        source:"images/spider_2.png"
         anchors.centerIn: parent
         scale:xpider_img_target_scale_
     }

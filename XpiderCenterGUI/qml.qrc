@@ -17,5 +17,6 @@
         <file>Target.qml</file>
         <file>Cross.qml</file>
         <file>images/cross.png</file>
+        <file>images/spider_2.png</file>
     </qresource>
 </RCC>
