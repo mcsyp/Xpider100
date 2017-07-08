@@ -4,12 +4,12 @@
 #include <math.h>
 #include <QDebug>
 #include "global_xpier.h"
-
 const float PI=3.14159;
 
 class TrajectoryPlanner {
 
 public:
+
   static constexpr int MAX_TARGET_SIZE=200;
   TrajectoryPlanner();
     /*purpose: reset the planer with the area width and height
@@ -42,7 +42,7 @@ public:
   float max_dis_y;
   float min_dis;                       //每只之间的安全距离
   float min_target_dis;                //近似到达目的地的距离
-  int wait_number;                     //等待最大次数
+  int wait_max_number;                     //等待最大次数
   xpider_target_point_t target_list_[MAX_TARGET_SIZE];
   int id_to_id[MAX_TARGET_SIZE];
   int target_len_;

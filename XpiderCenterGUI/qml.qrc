@@ -18,5 +18,6 @@
         <file>Cross.qml</file>
         <file>images/cross.png</file>
         <file>images/spider_2.png</file>
+        <file>CommandPanel.qml</file>
     </qresource>
 </RCC>

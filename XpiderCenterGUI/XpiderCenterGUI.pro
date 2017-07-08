@@ -10,7 +10,10 @@ SOURCES += main.cpp \
     xpider_ctl/xpider_protocol.cpp \
     xpider_location.cpp \
     trajectoryplanner.cpp \
-    xpidersocketthread.cpp
+    xpidersocketthread.cpp \
+    commandthread.cpp \
+    commandled.cpp \
+    commanddelay.cpp
 
 RESOURCES += qml.qrc
 
@@ -48,7 +51,10 @@ HEADERS += \
     xpider_ctl/arduino_log.h \
     xpider_ctl/linked_list.h \
     trajectoryplanner.h \
-    xpidersocketthread.h
+    xpidersocketthread.h \
+    commandthread.h \
+    commandled.h \
+    commanddelay.h
 
 DISTFILES += \
     main.qml

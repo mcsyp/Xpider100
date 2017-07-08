@@ -13,6 +13,8 @@
 #include "xpider_location.h"
 #include "xpidersocketthread.h"
 
+#include "commandthread.h"
+
 class OptiPostWork: public QObject{
   Q_OBJECT
 public:
@@ -36,7 +38,7 @@ public:
   static constexpr int RX_MAX_SIZE= 6000;
   static constexpr int INTERVAL_POST_TASK=2000;
 
-  static constexpr int XPIDER_WALK_SPEED=95;
+  static constexpr int XPIDER_WALK_SPEED=85;
   static constexpr int XPIDER_ROTATE_SPEED=100;
 
   enum SERVER_CMDID {
@@ -49,12 +51,16 @@ public:
   //start the server
   int StartService();
 
-  //stop and reset the server
-  Q_INVOKABLE void StopService();
-
   Q_INVOKABLE void pushTarget(unsigned int id, float x, float y);
   Q_INVOKABLE void removeTarget(unsigned int id);
 
+  /*purpose: set if running the planner
+   *input:
+   * @b, true if we start the planner
+   */
+  Q_INVOKABLE void startPlanner(bool b);
+
+  Q_INVOKABLE void runCommandText(QString cmd_text);
 signals:
   void plannerUpdate();
   void serviceInitializing();
@@ -63,6 +69,8 @@ signals:
 
   void xpiderListUpdate(QString str_json);
   void xpiderUpdate(int id,float theta,float x,float y,bool is_real);
+
+  void commandRunning(bool is_running);
 protected slots:
   void onClientDisconnected();
   void onClientReadyRead();
@@ -74,14 +82,17 @@ private:
   QTcpSocket *client_;
   OptiProtocol protocol_;
   QTime time_;
+  QTimer timer_retry_;
   int last_trigger_;
-  QThread worker_thread_;
-  OptiPostWork post_worker_;
+
   XpiderLocation *xpider_location_;
 
+  QThread planner_thread_;
+  OptiPostWork planner_;
+  bool is_planner_running_;
 
-  std::vector<XpiderSocketThread*> socket_list_;
-  std::vector<QThread*> thread_list_;
+  //command frameworkd related
+  CommandThread *ptr_cmd_thread_;
 public:
   std::map<uint32_t,xpider_target_point_t> target_map_;
 };

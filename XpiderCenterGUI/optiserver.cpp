@@ -17,33 +17,16 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   connect(&protocol_,SIGNAL(PayloadReady(int,QByteArray&)),
           this,SLOT(onPayloadReady(int,QByteArray&)));
 
-  post_worker_.moveToThread(&worker_thread_);
-  connect(this,SIGNAL(plannerUpdate()),&post_worker_,SLOT(onXpiderPlannerUpdated()));
+  planner_.moveToThread(&planner_thread_);
+  connect(this,SIGNAL(plannerUpdate()),&planner_,SLOT(onXpiderPlannerUpdated()));
   time_.start();
-  worker_thread_.start();
+  planner_thread_.start();
 
   xpider_location_=NULL;
 }
 OptiService::~OptiService(){
-  StopService();
-  XpiderSocketThread::DisposeAll();
-
-  for(auto iter=thread_list_.begin();iter!=thread_list_.end();++iter){
-    QThread * thread = *iter;
-    thread->deleteLater();
-    QThread::msleep(10);
-  }
-
-  worker_thread_.exit();
-  worker_thread_.deleteLater();
-  QThread::msleep(100);
-  if(xpider_location_)delete xpider_location_;
-}
-
-void OptiService::StopService(){
   //reset client
   if(client_)client_->disconnectFromHost();
-  client_=NULL;
 
   //reset server
   if(this->isListening()){
@@ -51,23 +34,23 @@ void OptiService::StopService(){
     this->close();
     qDebug()<<tr("[%1,%2] Opti server stoped.\n").arg(__FUNCTION__).arg(__LINE__);
   }
+  ptr_cmd_thread_->exit();
+  ptr_cmd_thread_->deleteLater();
+  delete ptr_cmd_thread_;
 
-  //release all memeorys
-  for(auto iter=socket_list_.begin();iter!=socket_list_.end();++iter){
-    XpiderSocketThread* socket = *iter;
-    if(socket)delete socket;
-  }
-  socket_list_.clear();
+  planner_thread_.exit();
+  planner_thread_.deleteLater();
+  QThread::msleep(100);
+  if(xpider_location_)delete xpider_location_;
 }
 
 int OptiService::StartService(){
   emit serviceInitializing();
 
-  //step1. reset server
-  StopService();
-
   time_.restart();
   last_trigger_=0;
+  is_planner_running_=false;
+  client_=NULL;
 
   //step2. start listening
   this->listen(QHostAddress::Any,SERVER_PORT);
@@ -75,7 +58,7 @@ int OptiService::StartService(){
 
   //init xpider location
   xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,5,2);
+  xpider_location_->GenerateInitLocation(0,0,5,4);
   XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
   int count=0;
   for(auto iter=list.begin();iter!=list.end();++iter){
@@ -86,8 +69,9 @@ int OptiService::StartService(){
 
   //step3. start some socket threads
   do{
-    const int host_size=10;
-    const char* host_list[]={"192.168.1.50",
+    const int host_size=18;
+    const char* host_list[]={"192.168.1.22",
+                            "192.168.1.50",
                             "192.168.1.51",
                             "192.168.1.52",
                             "192.168.1.53",
@@ -96,22 +80,29 @@ int OptiService::StartService(){
                             "192.168.1.56",
                             "192.168.1.57",
                             "192.168.1.58",
-                            "192.168.1.59"};
+                            "192.168.1.59",
+                            "192.168.1.60",
+                            "192.168.1.61",
+                            "192.168.1.62",
+                            "192.168.1.63",
+                            "192.168.1.64",
+                            "192.168.1.65",
+                            "192.168.1.66",
+                            "192.168.1.67"};
 
     const int host_port=80;
-    QThread * thread = new QThread;
     for(int i=0;i<host_size;++i){
-      XpiderSocketThread * socket = XpiderSocketThread::Create(thread);
+      XpiderSocketThread * socket = new XpiderSocketThread();
       if(socket){
         QString name = host_list[i];
         socket->StartConnection(name,host_port);
-        socket_list_.push_back(socket);
+        connect(&timer_retry_,SIGNAL(timeout()),socket,SLOT(onTimeoutRetry()));
       }
     }
-    thread_list_.push_back(thread);
   }while(0);
 
-
+  timer_retry_.start(XpiderSocketThread::INTERVAL_RETRY);
+  ptr_cmd_thread_ = new CommandThread;
   return this->serverPort();
 }
 
@@ -209,10 +200,10 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
 
     //step3. check if we need to update all xpiders' plan
     int current_time = time_.elapsed();
-    if(current_time-last_trigger_>INTERVAL_POST_TASK){
+    if(current_time-last_trigger_>INTERVAL_POST_TASK && is_planner_running_){
       //every 5sec
       last_trigger_ = current_time;
-      post_worker_.MoveToPostWork(target_map_,xpider_info_list);
+      planner_.MoveToPostWork(target_map_,xpider_info_list);
       emit plannerUpdate();
     }
 #endif
@@ -251,6 +242,18 @@ void OptiService::removeTarget(unsigned int id){
       }
     }
   }
+  XpiderSocketThread* x= XpiderSocketThread::Socket(id);
+  if(x)x->StopWalking();
+}
+
+void OptiService::startPlanner(bool b){
+  is_planner_running_ = b;
+}
+
+void OptiService::runCommandText(QString cmd_text){
+  qDebug()<<tr("[%1,%2] command text is:%3").arg(__FILE__).arg(__LINE__).arg(cmd_text);
+  emit commandRunning(true);
+  ptr_cmd_thread_->StartCommandChain(cmd_text);
 }
 
 

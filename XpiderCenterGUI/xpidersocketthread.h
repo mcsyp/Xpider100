@@ -15,22 +15,17 @@
 class XpiderSocketThread:public QTcpSocket
 {
   Q_OBJECT
-protected:
-  XpiderSocketThread(QObject* parent=NULL);
 public:
   typedef std::map<int, XpiderSocketThread*> XpiderMap;
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
-
   static constexpr int INTERVAL_RETRY=3000;
   static constexpr int RX_MAX_SIZE=128;
+  static constexpr int MAX_THREADS=100;
 
-  static constexpr int MAX_THREADS=120;
-  static void Dispose(uint32_t id);
-  static void DisposeAll();
   static XpiderSocketThread* Socket(uint32_t id);
-  static XpiderSocketThread* Create(QThread * work_thread);
 
+  XpiderSocketThread(QObject* parent=NULL);
   virtual ~XpiderSocketThread();
 
   void StartConnection(QString &host_name,int host_port);
@@ -44,6 +39,9 @@ public:
   bool Available() const;
   uint32_t Id() const{return my_id_;}
 
+  void StopWalking();
+protected:
+  static void Remove(uint32_t id);
 public slots:
   void onTimeoutRetry();
 
@@ -56,8 +54,7 @@ public slots:
 public:
   static XpiderMap g_xpider_map_;
 protected:
-
-  QTimer timer_retry_;
+  //QTimer timer_retry_;
   QTime time_clock_;
 
   QString host_name_;
@@ -65,6 +62,7 @@ protected:
   uint32_t my_id_;
 
   hdlc_qt::HDLC_qt hdlc_;
+  QThread event_thread_;
 private:
   int last_alive_tiggered_;
   bool is_alive_;

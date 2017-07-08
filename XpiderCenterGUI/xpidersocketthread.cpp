@@ -8,17 +8,13 @@
 #define MESSAGE_HEAD "0155"
 const QByteArray XpiderSocketThread::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
 XpiderSocketThread::XpiderMap XpiderSocketThread::g_xpider_map_ = XpiderSocketThread::XpiderMap();
-void XpiderSocketThread::Dispose(uint32_t id){
+void XpiderSocketThread::Remove(uint32_t id){
   for(auto iter = g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
     if(iter->first==id){
       g_xpider_map_.erase(iter++);
       break;
     }
   }
-}
-
-void XpiderSocketThread::DisposeAll(){
-  g_xpider_map_.clear();
 }
 XpiderSocketThread* XpiderSocketThread::Socket(uint32_t id){
   if(g_xpider_map_.count(id)){
@@ -27,42 +23,43 @@ XpiderSocketThread* XpiderSocketThread::Socket(uint32_t id){
     return NULL;
   }
 }
-XpiderSocketThread* XpiderSocketThread::Create(QThread * work_thread){
-  if(g_xpider_map_.size()>=MAX_THREADS)return NULL;
-
-  XpiderSocketThread* xpider = new XpiderSocketThread();
-  //init id
-  xpider->my_id_ = g_xpider_map_.size();
-  g_xpider_map_[xpider->my_id_] = xpider;
-
-  //init event thread
-  xpider->moveToThread(work_thread);
-  work_thread->start();
-  return xpider;
-}
 
 XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(&hdlc_,SIGNAL(hdlcTransmitByte(QByteArray)),this, SLOT(onHdlcEncodedByte(QByteArray)));
   connect(&hdlc_,SIGNAL(hdlcValidFrameReceived(QByteArray,quint16)),this,SLOT(onHdlcDecodedByte(QByteArray,quint16)));
 
-  connect(&timer_retry_,SIGNAL(timeout()),this,SLOT(onTimeoutRetry()));
+  //connect(&timer_retry_,SIGNAL(timeout()),this,SLOT(onTimeoutRetry()));
 
   connect(this,SIGNAL(connected()),this,SLOT(onConnected()));
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
   connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
+
+  //init id
+  my_id_ = g_xpider_map_.size();
+  g_xpider_map_[my_id_] = this;
+
+  //init event thread
+  moveToThread(&event_thread_);
 }
 XpiderSocketThread::~XpiderSocketThread(){
-  Dispose(my_id_);
+  Remove(my_id_);
+  disconnectFromHost();
+
+  event_thread_.exit(0);
+  event_thread_.deleteLater();
+  QThread::msleep(10);
 }
 void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
   host_name_ = host_name;
   host_port_ = host_port;
 
   time_clock_.start();
-  timer_retry_.start(INTERVAL_RETRY);
+  //timer_retry_.start(INTERVAL_RETRY);
 
   is_alive_=false;
   last_alive_tiggered_=0;
+
+  event_thread_.start();
 }
 
 void XpiderSocketThread::SendMessage(QByteArray &raw_message){
@@ -85,8 +82,7 @@ void XpiderSocketThread::onTimeoutRetry(){
 
 
 void XpiderSocketThread::onConnected(){
-  qDebug()<<tr("[%1,%2]xpider %3:%4 connected.").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
-
+  static uint64_t  rand_seed_counter=0;
   QByteArray tx_pack;
   uint8_t* tx_buffer;
   uint16_t tx_length;
@@ -95,14 +91,23 @@ void XpiderSocketThread::onConnected(){
   protocol.Initialize(&info);
 
   //step1.set target angle & transform to tx buffer
-  srand(time(NULL));
-  //uint8_t color = rand()%255;
-  info.left_led_rgb[0]=0;
-  info.left_led_rgb[1]=113;
-  info.left_led_rgb[2]=197;
-  info.left_led_rgb[3]=0;
-  info.left_led_rgb[4]=113;
-  info.left_led_rgb[5]=197;
+  ++rand_seed_counter;
+  srand(time(NULL)+rand_seed_counter);
+  uint8_t r = rand()%128;
+  uint8_t g = rand()%180;
+  uint8_t b = rand()%255;
+  info.left_led_rgb[0]=r;
+  info.left_led_rgb[1]=g;
+  info.left_led_rgb[2]=b;
+  info.right_led_rgb[0]=r;
+  info.right_led_rgb[1]=g;
+  info.right_led_rgb[2]=b;
+
+  qDebug()<<tr("[%1,%2]xpider %3:%4 connected with RGB(%5,%6,%7)")
+            .arg(__FILE__).arg(__LINE__)
+            .arg(host_name_)
+            .arg(host_port_)
+            .arg(r).arg(g).arg(b);
 
   protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
   tx_pack.append((char*)tx_buffer,tx_length);
@@ -140,4 +145,22 @@ bool XpiderSocketThread::Available() const{
   //return ((state()==ConnectedState) && is_alive_);
   return (state()==ConnectedState);
 
+}
+
+void XpiderSocketThread::StopWalking()
+{
+  QByteArray tx_pack;
+  uint8_t* tx_buffer;
+  uint16_t tx_length;
+  XpiderInfo info;
+  XpiderProtocol  protocol;
+  protocol.Initialize(&info);
+
+  //step1.set target angle & transform to tx buffe
+  info.move = 0;
+  info.rotate = 0;
+
+  protocol.GetBuffer(protocol.kMove, &tx_buffer, &tx_length);
+  tx_pack.append((char*)tx_buffer,tx_length);
+  SendMessage(tx_pack);
 }

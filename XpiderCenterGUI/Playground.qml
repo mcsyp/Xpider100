@@ -117,12 +117,12 @@ Rectangle {
         repeat: true
         onTriggered: {
             for(var i=0;i<target_queue_.length;++i){
-                if(target_queue_[i].x<0 || xpider_queue_[i].x<0)continue
+                if(target_queue_[i].x<0 || xpider_queue_[i].x<0 || xpider_queue_[i].visible===false)continue
 
                 var dx = (target_queue_[i].x-xpider_queue_[i].x)*(target_queue_[i].x-xpider_queue_[i].x);
                 var dy = (target_queue_[i].y-xpider_queue_[i].y)*(target_queue_[i].y-xpider_queue_[i].y);
                 var d = Math.sqrt(dx+dy);
-                if(d<50){
+                if(d<40){
                     opti_server_.removeTarget(xpider_queue_[i].dev_id);
                     target_queue_[i].x = reset_pos_;
                     target_queue_[i].y = reset_pos_;
@@ -184,6 +184,7 @@ Rectangle {
                 var screen_y = (0.5-y/real_height_)*playground_.height
                 cross_queue_[id].x = screen_x;
                 cross_queue_[id].y = screen_y;
+                cross_queue_[id].cross_id =id;
             }
         }
        onServiceInitializing:{

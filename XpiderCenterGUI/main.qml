@@ -20,18 +20,37 @@ ApplicationWindow {
     }
 
     onClosing: {
-        opti_server_.StopService()
+        //opti_server_.StopService()
     }
-
 
     Button{
         id:start_btn_
-        text:"Stop"
-        x:parent.width/2-start_btn_.width/2;
+        property bool is_planner_running:false
+        text:(is_planner_running)?"Stop":"Start"
+        x:parent.width/2-start_btn_.width-2;
         y:parent.height-start_btn_.height-5
         onClicked: {
-            playground_.resetAllTargets()
+            if(is_planner_running){
+                playground_.resetAllTargets();
+            }
+            is_planner_running = !is_planner_running;
+            opti_server_.startPlanner(is_planner_running);
         }
+    }
+    Button{
+        id:cmd_btn_
+        text:"Command"
+        x:2+parent.width/2
+        y:parent.height-cmd_btn_.height-5
+        onClicked: {
+            cmd_panel_.visible=true;
+            cmd_panel_.raise()
+        }
+    }
+
+    CommandPanel{
+        id:cmd_panel_;
+        visible: false;
     }
 
 }

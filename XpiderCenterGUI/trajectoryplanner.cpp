@@ -5,10 +5,10 @@ TrajectoryPlanner::TrajectoryPlanner()
   max_dis_id = 0;
   max_dis_x = 0;
   max_dis_y = 0;
-  min_dis = 0.15;             //15cm
-  min_target_dis = 0.08;      //3cm
+  min_dis = 0.15;             //20cm
+  min_target_dis = 0.06;      //6cm
   target_len_ = 0;
-  wait_number = 4;
+  wait_max_number = 6;
 };
 
 bool TrajectoryPlanner::Reset(float width, float height, xpider_target_point_t target_list[], int target_len){
@@ -82,28 +82,32 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
     }
   }
 
-  //step4:计算每个ID与目标点之间的距离值
+  //step4:给ID赋值;若长时间等待，转角90°
   for (int i=0; i<info_len; i++) {
+    out_action[i].id = target_list_[i].id;
+    //if (id_to_id[i]==wait_max_number) {
+    //  out_action[i].delta_theta = out_action[i].delta_theta + PI/2;
+    //  out_action[i].detla_step = 3;
+    //  id_to_id[i] = 0;
+    //}
+  }
+
+  //step5:计算每个ID与目标点之间的距离值
+  /*for (int i=0; i<info_len; i++) {
     float aim_dis = sqrt(pow((info[i].x-target_list_[i].target_x),2)+pow((info[i].y-target_list_[i].target_y),2));
     //qDebug()<<"aim_dis["<<i<<"]"<<aim_dis;
     if (aim_dis<min_target_dis) {
       out_action[i].detla_step = 0;
+      out_action[i].delta_theta = 0;
     }
-  }
+  }*/
 
-  //step5:给ID赋值;若长时间等待，转角90°
-  for (int i=0; i<info_len; i++) {
-    out_action[i].id = target_list_[i].id;
-    if (id_to_id[i]==wait_number) {
-      out_action[i].delta_theta = out_action[i].delta_theta + PI/2;
-      out_action[i].detla_step = 5;
-      id_to_id[i] = 0;
-    }
-    /*qDebug()<<"out_action["<<i<<"]:         ID:"<<out_action[i].id;
-    qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
+  for(int i=0; i<info_len; i++){
+    qDebug()<<"out_action["<<i<<"]:       ID:"<<out_action[i].id;
+    //qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
     qDebug()<<"out_action["<<i<<"]:          θ:"<<(out_action[i].delta_theta)*(180/PI);
     qDebug()<<"out_action["<<i<<"]: detla_step:"<<out_action[i].detla_step;
-    qDebug()<<'\n';*/
+    qDebug()<<'\n';
   }
   return info_len;
 }
