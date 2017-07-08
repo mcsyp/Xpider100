@@ -6,8 +6,7 @@ Item {
     property var xpider_img_target_scale_:0.5
     property var selected_: false
     property var xpider_selected_scale_:0.35
-    property var world_x: 0
-    property var world_y: 0
+
     Image{
         id:xpider_img_
         source:"images/spider_2.png"

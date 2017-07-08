@@ -57,6 +57,18 @@ Rectangle {
             }
         }
     }
+    function convertFromRealToScreen(real_x,real_y){
+        var screen_x,screen_y;
+        screen_x = (real_x/real_width_+0.5)*main_window_.width
+        screen_y = (0.5-real_y/real_height_)*main_window_.height
+        return [screen_x,screen_y];
+    }
+    function convertFromScreenToReal(screen_x,screen_y){
+        var real_x,real_y;
+        real_x = (screen_x/main_window_.width-0.5)*real_width_;
+        real_y = (0.5-screen_y/main_window_.height)*real_height_;
+        return [real_x,real_y];
+    }
 
 
     MouseArea{
@@ -70,7 +82,7 @@ Rectangle {
                     selected_xpider_index_ = -1;
                 }
                 for(var i=0;i<xpider_queue_.length;++i){
-                    xpider_queue_[i].setSelected(i==index);
+                    xpider_queue_[i].setSelected(i===index);
                 }
 
             }else{
@@ -82,10 +94,9 @@ Rectangle {
                     target_queue_[selected_xpider_index_].show();
 
                     //push target to c++
-                    var real_x = (mouse.x/playground_.width-0.5)*real_width_;
-                    var real_y = (0.5-mouse.y/playground_.height)*real_height_;
-                    opti_server_.pushTarget(dev_id,real_x,real_y);
-                    console.log("selected target id:",dev_id," x:",real_x," y:",real_y);
+                    var real_pos = convertFromScreenToReal(mouse.x,mouse.y);
+                    opti_server_.pushTarget(dev_id,real_pos[0],real_pos[1]);
+                    console.log("selected target id:",dev_id," x:",real_pos[0]," y:",real_pos[1]);
                 }
             }
         }
@@ -109,6 +120,7 @@ Rectangle {
         }
         return -1;
     }
+
 
     Timer{
         id:timer
@@ -143,10 +155,10 @@ Rectangle {
         onXpiderUpdate:{
             //console.log("index:",id," theta:",theta," x:",x," y:",y)
             if(id>=0 && id<xpider_queue_.length){
-                var screen_x = (x/real_width_+0.5)*playground_.width
-                var screen_y = (0.5-y/real_height_)*playground_.height
-                xpider_queue_[id].x = screen_x;
-                xpider_queue_[id].y = screen_y;
+                var screen_pos;
+                screen_pos = convertFromRealToScreen(x,y)
+                xpider_queue_[id].x = screen_pos[0];
+                xpider_queue_[id].y = screen_pos[1];
                 var angle = (90-theta*180.0/Math.PI)%360
                 xpider_queue_[id].rotation=angle;
                 if(is_real==false){
@@ -180,8 +192,8 @@ Rectangle {
         onLandmarkUpdate :{
             console.log("corss udpated");
             if(id>=0 && id<cross_queue_.length){
-                var screen_x = (x/real_width_+0.5)*playground_.width
-                var screen_y = (0.5-y/real_height_)*playground_.height
+                var screen_x = (x/real_width_+0.5)*main_window_.width
+                var screen_y = (0.5-y/real_height_)*main_window_.height
                 cross_queue_[id].x = screen_x;
                 cross_queue_[id].y = screen_y;
                 cross_queue_[id].cross_id =id;

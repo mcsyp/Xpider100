@@ -58,7 +58,7 @@ int OptiService::StartService(){
 
   //init xpider location
   xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,5,4);
+  xpider_location_->GenerateInitLocation(0,0,5,5);
   XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
   int count=0;
   for(auto iter=list.begin();iter!=list.end();++iter){
@@ -69,8 +69,9 @@ int OptiService::StartService(){
 
   //step3. start some socket threads
   do{
-    const int host_size=18;
+    const int host_size=22;
     const char* host_list[]={"192.168.1.22",
+                             "192.168.1.23",
                             "192.168.1.50",
                             "192.168.1.51",
                             "192.168.1.52",
@@ -88,7 +89,9 @@ int OptiService::StartService(){
                             "192.168.1.64",
                             "192.168.1.65",
                             "192.168.1.66",
-                            "192.168.1.67"};
+                            "192.168.1.67",
+                            "192.168.1.68",
+                            "192.168.1.69"};
 
     const int host_port=80;
     for(int i=0;i<host_size;++i){

@@ -5,7 +5,7 @@ TrajectoryPlanner::TrajectoryPlanner()
   max_dis_id = 0;
   max_dis_x = 0;
   max_dis_y = 0;
-  min_dis = 0.15;             //20cm
+  min_dis = 0.20;             //20cm
   min_target_dis = 0.06;      //6cm
   target_len_ = 0;
   wait_max_number = 6;
@@ -31,8 +31,6 @@ bool TrajectoryPlanner::Reset(float width, float height, xpider_target_point_t t
 
 int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_action[],int out_size){
 
-  float info_target_dis;
-
   //step1:计算当前位置和最大距离值点的距离，判断优先级
   float priority[out_size];
   for (int i=0; i<info_len; i++){
@@ -42,23 +40,26 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
   }
 
   //step2:计算旋转角度，行走步数
+  float info_target_dis;
   for (int i=0; i<info_len; i++) {
     for(int j=0; j<info_len; j++) {
       if (info[i].id==target_list_[j].id) {
         info_target_dis = sqrt(pow((target_list_[j].target_y-info[i].y),2)+pow((target_list_[j].target_x-info[i].x),2));
         float A1 = acos((target_list_[j].target_x-info[i].x)/info_target_dis);
         if (target_list_[j].target_y-info[i].y<0) {
-          A1 = 2*PI-A1;                               //A1~(0,2PI)
+          A1 = 2.0f*PI-A1;                               //A1~(0,2PI)
         }
+        //qDebug()<<"info[].theta"<<info[i].theta*180/PI;
         //qDebug()<<"A1:"<<A1*180/PI;
-        float D_a = fabs(info[i].theta-A1);
-        float D_b = 2*PI-D_a;
-        float D_min = ((D_a>D_b)?D_b:D_a);
-        if((A1-D_min)==info[i].theta) {
-          D_min = -D_min;
-        }
-        out_action[i].delta_theta = D_min;
-        out_action[i].detla_step = 3;
+
+        float delta_rad1, delta_rad2;
+        delta_rad1 = info[i].theta-A1;// - info[i].theta;
+        delta_rad2 = delta_rad1<0 ? PI*2.0+delta_rad1 : delta_rad1-PI*2.0;
+        delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
+
+        qDebug()<<"Theta:"<<-delta_rad1*180/PI;
+        out_action[i].delta_theta = delta_rad1;
+        out_action[i].detla_step = 5;
       }
     }
   }
@@ -72,10 +73,10 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
         if (D_dist<min_dis){
           if (priority[i]<priority[j]) {
             out_action[j].detla_step = 0;    //低于安全距离的，优先级低置零
-            id_to_id[j] = id_to_id[j]+1;
+            id_to_id[j]++;
           } else {
             out_action[i].detla_step = 0;
-            id_to_id[i] = id_to_id[i]+1;
+            id_to_id[i]++;
           }
         }
       }
@@ -102,12 +103,10 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
     }
   }*/
 
-  for(int i=0; i<info_len; i++){
-    qDebug()<<"out_action["<<i<<"]:       ID:"<<out_action[i].id;
-    //qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
+    /*qDebug()<<"out_action["<<i<<"]:       ID:"<<out_action[i].id;
+    qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
     qDebug()<<"out_action["<<i<<"]:          θ:"<<(out_action[i].delta_theta)*(180/PI);
     qDebug()<<"out_action["<<i<<"]: detla_step:"<<out_action[i].detla_step;
-    qDebug()<<'\n';
-  }
+    qDebug()<<'\n';*/
   return info_len;
 }

@@ -3,6 +3,7 @@ import QtQuick 2.0
 Item {
     property var cross_img_scale: 0.1
     property var cross_id:0
+
    /*
     Image{
         id: cross_img

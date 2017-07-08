@@ -10,25 +10,20 @@ ApplicationWindow {
     minimumWidth: 900
     minimumHeight: 600
 
+    property var command_list_:new Array()
+
     Playground {
      id:playground_
-     anchors.fill: parent
-     anchors.centerIn: parent
-    }
-    onWidthChanged: {
-        main_window_.height = main_window_.width*2/3;
-    }
-
-    onClosing: {
-        //opti_server_.StopService()
+     width:  parent.width
+     height: width*2/3;
     }
 
     Button{
         id:start_btn_
         property bool is_planner_running:false
         text:(is_planner_running)?"Stop":"Start"
-        x:parent.width/2-start_btn_.width-2;
-        y:parent.height-start_btn_.height-5
+        x:main_window_.width/2-start_btn_.width-2;
+        y:main_window_.height-start_btn_.height-5
         onClicked: {
             if(is_planner_running){
                 playground_.resetAllTargets();
@@ -40,17 +35,55 @@ ApplicationWindow {
     Button{
         id:cmd_btn_
         text:"Command"
-        x:2+parent.width/2
-        y:parent.height-cmd_btn_.height-5
+        x:2+main_window_.width/2
+        y:main_window_.height-cmd_btn_.height-5
         onClicked: {
-            cmd_panel_.visible=true;
-            cmd_panel_.raise()
+            //cmd_panel_.visible=true;
+            //cmd_panel_.raise()
+            var panel = availableCommandPanel()
+            panel.visible=true;
+            panel.raise();
+            console.log("command panel list len:",command_list_.length);
         }
     }
 
+    function createCommanPanel(){
+        var component = Qt.createComponent("CommandPanel.qml");
+        if(component.status===Component.Ready){
+            for(var i=0;i<10;++i){
+                var dynamic_comp_ = component.createObject(main_window_,
+                                                       {"x":0,
+                                                        "y":0,
+                                                        "visible":false,});
+                command_list_.push(dynamic_comp_);
+            }
+        }
+    }
+
+    function availableCommandPanel(){
+        for(var i=0;i<command_list_.length;++i){
+            var panel = command_list_[i];
+            if(panel.visible===false){
+                panel.x = i*100;
+                panel.y = i*100;
+                return panel;
+            }
+        }
+        return command_list_[i];
+    }
+    Connections{
+        target:opti_server_
+        onServiceInitializing:{
+              createCommanPanel();
+
+             console.log("command panel list intialized:",command_list_.length);
+         }
+    }
+    /*
     CommandPanel{
         id:cmd_panel_;
         visible: false;
     }
+    */
 
 }

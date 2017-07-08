@@ -9,7 +9,6 @@ const float PI=3.14159;
 class TrajectoryPlanner {
 
 public:
-
   static constexpr int MAX_TARGET_SIZE=200;
   TrajectoryPlanner();
     /*purpose: reset the planer with the area width and height

@@ -5,7 +5,7 @@
 #include <vector>
 #include "global_xpier.h"
 
-#define ROBOT_LOOSE_FRAME_COUNT 30
+#define ROBOT_LOOSE_FRAME_COUNT 90
 #define MARKER_MAX_DISTANCE 0.055f
 #define ROBOT_PLACE_WIDTH 0.2
 
