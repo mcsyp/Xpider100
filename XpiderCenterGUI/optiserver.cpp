@@ -58,7 +58,7 @@ int OptiService::StartService(){
 
   //init xpider location
   xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,5,5);
+  xpider_location_->GenerateInitLocation(0, 0, 1, 2);
   XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
   int count=0;
   for(auto iter=list.begin();iter!=list.end();++iter){
@@ -69,29 +69,65 @@ int OptiService::StartService(){
 
   //step3. start some socket threads
   do{
-    const int host_size=22;
-    const char* host_list[]={"192.168.1.22",
-                             "192.168.1.23",
-                            "192.168.1.50",
-                            "192.168.1.51",
-                            "192.168.1.52",
-                            "192.168.1.53",
-                            "192.168.1.54",
-                            "192.168.1.55",
-                            "192.168.1.56",
-                            "192.168.1.57",
-                            "192.168.1.58",
-                            "192.168.1.59",
-                            "192.168.1.60",
-                            "192.168.1.61",
-                            "192.168.1.62",
-                            "192.168.1.63",
-                            "192.168.1.64",
-                            "192.168.1.65",
-                            "192.168.1.66",
-                            "192.168.1.67",
-                            "192.168.1.68",
-                            "192.168.1.69"};
+    const int host_size=2;
+    const char* host_list[]={ "192.168.1.50",
+                              "192.168.1.51",
+//                              "192.168.1.52",
+//                              "192.168.1.53",
+//                              "192.168.1.54",
+//                              "192.168.1.55",
+//                              "192.168.1.56",
+//                              "192.168.1.57",
+//                              "192.168.1.58",
+//                              "192.168.1.59",
+//                              "192.168.1.60",
+//                              "192.168.1.61",
+//                              "192.168.1.62",
+//                              "192.168.1.63",
+//                              "192.168.1.64",
+//                              "192.168.1.65",
+//                              "192.168.1.66",
+//                              "192.168.1.67",
+//                              "192.168.1.68",
+//                              "192.168.1.69",
+//                              "192.168.1.70",
+//                              "192.168.1.71",
+//                              "192.168.1.72",
+//                              "192.168.1.73",
+//                              "192.168.1.74",
+//                              "192.168.1.75",
+//                              "192.168.1.76",
+//                              "192.168.1.77",
+//                              "192.168.1.78",
+//                              "192.168.1.79",
+//                              "192.168.1.80",
+//                              "192.168.1.81",
+//                              "192.168.1.82",
+//                              "192.168.1.83",
+//                              "192.168.1.84",
+//                              "192.168.1.85",
+//                              "192.168.1.86",
+//                              "192.168.1.87",
+//                              "192.168.1.88",
+//                              "192.168.1.89",
+//                              "192.168.1.90",
+//                              "192.168.1.91",
+//                              "192.168.1.92",
+//                              "192.168.1.93",
+//                              "192.168.1.94",
+//                              "192.168.1.95",
+//                              "192.168.1.96",
+//                              "192.168.1.97",
+//                              "192.168.1.98",
+//                              "192.168.1.99",
+//                              "192.168.1.100",
+//                              "192.168.1.101",
+//                              "192.168.1.102",
+//                              "192.168.1.103",
+//                              "192.168.1.104",
+//                              "192.168.1.22",
+//                              "192.168.1.23",
+                            };
 
     const int host_port=80;
     for(int i=0;i<host_size;++i){
@@ -267,16 +303,21 @@ void OptiPostWork::MoveToPostWork(std::map<uint32_t, xpider_target_point_t> &tar
   for(auto iter = target_map.begin();iter!=target_map.end();++iter){
     target_list_[list_len_]  = iter->second;
     uint32_t id =target_list_[list_len_].id;
-    for(auto  info_iter=info_list.begin();info_iter!=info_list.end();++info_iter){
-      xpider_opti_t info = *info_iter;
-      if(info.id==id){
-        xpider_list_[list_len_] = info;
-        break;
-      }
-    }
+//    for(auto  info_iter=info_list.begin();info_iter!=info_list.end();++info_iter){
+//      xpider_opti_t info = *info_iter;
+//      if(info.id==id){
+//        xpider_list_[list_len_] = info;
+//        break;
+//      }
+//    }
     ++list_len_;
   }
 
+  qDebug() << "len before reset" << info_list.size();
+  for(auto i=0; i<info_list.size(); i++){
+      xpider_list_[i] = info_list[i];
+  }
+  xpider_list_len_ = info_list.size();
   planner_.Reset(3.0,2.0,target_list_,list_len_);
 }
 
@@ -287,7 +328,7 @@ void OptiPostWork::onXpiderPlannerUpdated(){
   //TODO: call XIAO BO code
   const int action_size = list_len_;
   xpider_tp_t action_list[action_size];
-  int len = planner_.Plan(xpider_list_,list_len_,action_list,action_size);
+  int len = planner_.Plan(xpider_list_, xpider_list_len_, action_list, action_size);
 
   //step2.call all xpiders to move
   for(int i=0;i<len;++i){

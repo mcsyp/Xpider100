@@ -28,7 +28,7 @@ private:
   TrajectoryPlanner planner_;
   xpider_target_point_t target_list_[XpiderSocketThread::MAX_THREADS];
   xpider_opti_t xpider_list_[XpiderSocketThread::MAX_THREADS];
-  int list_len_;
+  int list_len_, xpider_list_len_;
 };
 
 class OptiService : public QTcpServer{
