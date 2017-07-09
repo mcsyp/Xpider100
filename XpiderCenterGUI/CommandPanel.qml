@@ -4,8 +4,6 @@ import QtQuick.Controls 2.0
 Window {
     minimumHeight: 200
     minimumWidth: 400
-    x:Screen.width/2+100;
-    y:Screen.height/2-300;
 
     title: "Xpider Command Input:"
     Rectangle{
@@ -54,6 +52,7 @@ Window {
     Flickable {
         id: flick
         clip: true
+        y:info_rect_.height
         width: parent.width;
         height: parent.height-30;
         contentWidth: cmd_edit.paintedWidth
@@ -94,6 +93,7 @@ Window {
             }
             //push the command to center
             opti_server_.runCommandText(cmd_edit.text.trim());
+            info_rect_.show("command accepted & running...",3000);
         }
     }
     Button{
@@ -105,16 +105,6 @@ Window {
         y:(parent.height-height)
         onClicked: {
            cmd_edit.text="";
-        }
-    }
-    Connections{
-        target:opti_server_
-        onCommandRunning:{
-            if(is_running){
-                info_rect_.show("command accepted & running...",5000);
-            }else{
-                info_rect_.show("invalid command input",3000);
-            }
         }
     }
 }

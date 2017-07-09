@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <QDebug>
-#include "global_xpier.h"
+#include "global_xpider.h"
 const float PI=3.14159;
 
 class TrajectoryPlanner {
@@ -35,6 +35,24 @@ public:
      * return the length of the out_action array
      */
   int Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_action[], int out_size);
+
+  /*purpose: reset the planer with the area width and height
+   * Target area info also included
+   *input:
+   * @xpider_pos_list, the xpider loaction info from optitract analyzer
+   * @target_list, the length of the info list
+   *output:
+   * @out_action, the calculated action of all xpiders
+   * @out_size, the size of the out_action array.
+   *return
+   * return the length of the out_action array
+   */
+int Plan(std::vector<xpider_opti_t>& xpider_pos_list,
+         std::vector<xpider_target_point_t>& target_list,
+         xpider_tp_t out_action[], int out_size)
+{
+  return 0;
+}
 public:
   int max_dis_id;
   float max_dis_x;

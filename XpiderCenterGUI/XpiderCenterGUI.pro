@@ -13,7 +13,8 @@ SOURCES += main.cpp \
     xpidersocketthread.cpp \
     commandthread.cpp \
     commandled.cpp \
-    commanddelay.cpp
+    commanddelay.cpp \
+    trajectorythread.cpp
 
 RESOURCES += qml.qrc
 
@@ -41,7 +42,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 
 HEADERS += \
-    global_xpier.h \
     hdlc_qt.h \
     optiprotocol.h \
     optiserver.h \
@@ -54,7 +54,9 @@ HEADERS += \
     xpidersocketthread.h \
     commandthread.h \
     commandled.h \
-    commanddelay.h
+    commanddelay.h \
+    global_xpider.h \
+    trajectorythread.h
 
 DISTFILES += \
     main.qml

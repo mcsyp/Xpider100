@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 #include <vector>
+#include <QPointF>
+#include <QMap>
 
 #include "optiprotocol.h"
 #include "trajectoryplanner.h"
@@ -14,22 +16,7 @@
 #include "xpidersocketthread.h"
 
 #include "commandthread.h"
-
-class OptiPostWork: public QObject{
-  Q_OBJECT
-public:
-  explicit OptiPostWork(QObject* parent=NULL);
-  void MoveToPostWork(std::map<uint32_t,xpider_target_point_t> &target_map,std::vector<xpider_opti_t> & info_list);
-
-protected slots:
-  void onXpiderPlannerUpdated();
-
-private:
-  TrajectoryPlanner planner_;
-  xpider_target_point_t target_list_[XpiderSocketThread::MAX_THREADS];
-  xpider_opti_t xpider_list_[XpiderSocketThread::MAX_THREADS];
-  int list_len_;
-};
+#include "trajectorythread.h"
 
 class OptiService : public QTcpServer{
   Q_OBJECT
@@ -51,26 +38,22 @@ public:
   //start the server
   int StartService();
 
+  //push and remove target
   Q_INVOKABLE void pushTarget(unsigned int id, float x, float y);
   Q_INVOKABLE void removeTarget(unsigned int id);
+  Q_INVOKABLE void clearTargets();
 
-  /*purpose: set if running the planner
-   *input:
-   * @b, true if we start the planner
-   */
-  Q_INVOKABLE void startPlanner(bool b);
+  //enable the trajectory planner thread
+  Q_INVOKABLE void enablePlanner(bool b);
 
+  //run the command list in command thread framework
   Q_INVOKABLE void runCommandText(QString cmd_text);
 signals:
-  void plannerUpdate();
   void serviceInitializing();
 
-  void landmarkUpdate(unsigned int id,float x,float y);
-
+  void landmarkListUpdate(QString str_json);
   void xpiderListUpdate(QString str_json);
-  void xpiderUpdate(int id,float theta,float x,float y,bool is_real);
 
-  void commandRunning(bool is_running);
 protected slots:
   void onClientDisconnected();
   void onClientReadyRead();
@@ -79,21 +62,44 @@ protected slots:
 
   void onPayloadReady(int cmdid,QByteArray & payload);
 private:
+  /*purpose: this will sync the xpider opti pos and target pos by the sync flag in target strcuture
+   *input:
+   * @xpider_list: the vector saves location-processed xpider opti, with available ID in it.
+   * @target_list: the vector saves the processed target list, with non-info in it
+   */
+  void SyncXpiderTarget(std::vector<xpider_opti_t> & xpider_list, std::vector<xpider_target_point_t>& target_list);
+
+  /*purpose: process the XpiderSocketThread list to find out those availible xpider's index
+   *input:
+   * @id_size, the max size of the xpider id_array
+   *output:
+   * @id_array, those available xpider socket's ID are saved in this array
+   *return:
+   * length of the output id_array
+   */
+  int AvailableXpiderSocketID(uint32_t id_array[],int id_size);
+
+  //convert a Point class into a QString
+  QString PointToString(const QPointF& point);
+private:
+  //opti socket related part
   QTcpSocket *client_;
   OptiProtocol protocol_;
+
+  //time relatedd task
   QTime time_;
   QTimer timer_retry_;
   int last_trigger_;
 
-  XpiderLocation *xpider_location_;
+  //xpider location service
+  XpiderLocation *ptr_location_;
 
-  QThread planner_thread_;
-  OptiPostWork planner_;
   bool is_planner_running_;
+  TrajectoryThread *ptr_planner_thread_;
 
-  //command frameworkd related
+  //command frameworkrelated
   CommandThread *ptr_cmd_thread_;
-public:
-  std::map<uint32_t,xpider_target_point_t> target_map_;
+
+  QMap<unsigned int,QPointF> ui_target_mask_;//if ui updated any target info, save its flag in this mask
 };
 #endif // ServerOpti_H

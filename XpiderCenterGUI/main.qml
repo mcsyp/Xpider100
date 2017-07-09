@@ -5,10 +5,12 @@ import QtQuick.Layouts 1.0
 ApplicationWindow {
     id:main_window_
     visible: true
-    width:1200
-    height:800
-    minimumWidth: 900
-    minimumHeight: 600
+    width:1440
+    height:900
+    minimumWidth: width
+    minimumHeight: height
+    maximumWidth: width
+    maximumHeight: height
 
     property var command_list_:new Array()
 
@@ -29,7 +31,7 @@ ApplicationWindow {
                 playground_.resetAllTargets();
             }
             is_planner_running = !is_planner_running;
-            opti_server_.startPlanner(is_planner_running);
+            opti_server_.enablePlanner(is_planner_running);
         }
     }
     Button{
@@ -38,8 +40,6 @@ ApplicationWindow {
         x:2+main_window_.width/2
         y:main_window_.height-cmd_btn_.height-5
         onClicked: {
-            //cmd_panel_.visible=true;
-            //cmd_panel_.raise()
             var panel = availableCommandPanel()
             panel.visible=true;
             panel.raise();
@@ -55,6 +55,8 @@ ApplicationWindow {
                                                        {"x":0,
                                                         "y":0,
                                                         "visible":false,});
+                dynamic_comp_.x = i*100;
+                dynamic_comp_.y = i*100;
                 command_list_.push(dynamic_comp_);
             }
         }
@@ -64,8 +66,6 @@ ApplicationWindow {
         for(var i=0;i<command_list_.length;++i){
             var panel = command_list_[i];
             if(panel.visible===false){
-                panel.x = i*100;
-                panel.y = i*100;
                 return panel;
             }
         }

@@ -7,22 +7,7 @@
 
 #define MESSAGE_HEAD "0155"
 const QByteArray XpiderSocketThread::XPIDER_MESSAGE_HEAD = QByteArray::fromHex(MESSAGE_HEAD);
-XpiderSocketThread::XpiderMap XpiderSocketThread::g_xpider_map_ = XpiderSocketThread::XpiderMap();
-void XpiderSocketThread::Remove(uint32_t id){
-  for(auto iter = g_xpider_map_.begin();iter!=g_xpider_map_.end();++iter){
-    if(iter->first==id){
-      g_xpider_map_.erase(iter++);
-      break;
-    }
-  }
-}
-XpiderSocketThread* XpiderSocketThread::Socket(uint32_t id){
-  if(g_xpider_map_.count(id)){
-    return g_xpider_map_[id];
-  }else{
-    return NULL;
-  }
-}
+XpiderSocketThread::XpiderList XpiderSocketThread::socket_list_ = XpiderSocketThread::XpiderList();
 
 XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(&hdlc_,SIGNAL(hdlcTransmitByte(QByteArray)),this, SLOT(onHdlcEncodedByte(QByteArray)));
@@ -35,19 +20,21 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
 
   //init id
-  my_id_ = g_xpider_map_.size();
-  g_xpider_map_[my_id_] = this;
+  socket_list_.push_back(this);
 
   //init event thread
   moveToThread(&event_thread_);
 }
 XpiderSocketThread::~XpiderSocketThread(){
-  Remove(my_id_);
   disconnectFromHost();
 
   event_thread_.exit(0);
   event_thread_.deleteLater();
   QThread::msleep(10);
+
+  //replace the instance at that position
+  int index=socket_list_.indexOf(this);
+  socket_list_.replace(index,NULL);//we only remove, do not ERASE!!!!
 }
 void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
   host_name_ = host_name;

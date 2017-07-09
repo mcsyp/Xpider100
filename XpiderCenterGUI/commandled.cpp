@@ -100,17 +100,19 @@ bool CommandLed::Exec(QStringList argv){
     tx_pack.append((char*)tx_buffer,tx_length);
 
     if(is_all_included){
-      for(auto iter=XpiderSocketThread::g_xpider_map_.begin();
-          iter!=XpiderSocketThread::g_xpider_map_.end();
+      for(auto iter=XpiderSocketThread::socket_list_.begin();
+          iter!=XpiderSocketThread::socket_list_.end();
           ++iter){
-        XpiderSocketThread * x = iter->second;
+        XpiderSocketThread * x = *iter;
         if(x){
           x->SendMessage(tx_pack);
         }
       }
     }else{
-      XpiderSocketThread *x = XpiderSocketThread::Socket(id);
-      x->SendMessage(tx_pack);
+      XpiderSocketThread *x = XpiderSocketThread::socket_list_.at(id);
+      if(x){
+        x->SendMessage(tx_pack);
+      }
     }
   }while(0);
 

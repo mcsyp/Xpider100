@@ -6,9 +6,12 @@
 #include <QTime>
 #include <QTcpSocket>
 #include <QByteArray>
+#include <QVector>
 
 #include <stdint.h>
 #include <vector>
+
+#include "global_xpider.h"
 
 #include <hdlc_qt.h>
 
@@ -16,14 +19,14 @@ class XpiderSocketThread:public QTcpSocket
 {
   Q_OBJECT
 public:
-  typedef std::map<int, XpiderSocketThread*> XpiderMap;
+  typedef QVector<XpiderSocketThread*> XpiderList;
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
   static constexpr int INTERVAL_RETRY=3000;
   static constexpr int RX_MAX_SIZE=128;
-  static constexpr int MAX_THREADS=100;
 
-  static XpiderSocketThread* Socket(uint32_t id);
+  static XpiderList socket_list_;
+  static XpiderSocketThread* Socket(int index);
 
   XpiderSocketThread(QObject* parent=NULL);
   virtual ~XpiderSocketThread();
@@ -37,11 +40,9 @@ public:
   void SendMessage(QByteArray& raw_message);
 
   bool Available() const;
-  uint32_t Id() const{return my_id_;}
 
   void StopWalking();
-protected:
-  static void Remove(uint32_t id);
+
 public slots:
   void onTimeoutRetry();
 
@@ -51,15 +52,13 @@ public slots:
 
   void onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size);
   void onHdlcEncodedByte(QByteArray encoded_data);
-public:
-  static XpiderMap g_xpider_map_;
+
 protected:
   //QTimer timer_retry_;
   QTime time_clock_;
 
   QString host_name_;
   int host_port_;
-  uint32_t my_id_;
 
   hdlc_qt::HDLC_qt hdlc_;
   QThread event_thread_;

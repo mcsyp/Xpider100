@@ -3,7 +3,7 @@ import QtQuick 2.0
 Item {
     id: target_;
     property var dev_id:0
-    property var target_img_scale_: 0.25
+    property var target_img_scale_: 0.8
 
     Image{
         id: target_img

@@ -4,9 +4,11 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <qdebug.h>
+#include <QTextStream>
+
 #include <stdio.h>
 
-#include "global_xpier.h"
+#include "global_xpider.h"
 #include "xpider_ctl/xpider_info.h"
 #include "xpider_ctl/xpider_protocol.h"
 
@@ -17,12 +19,9 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   connect(&protocol_,SIGNAL(PayloadReady(int,QByteArray&)),
           this,SLOT(onPayloadReady(int,QByteArray&)));
 
-  planner_.moveToThread(&planner_thread_);
-  connect(this,SIGNAL(plannerUpdate()),&planner_,SLOT(onXpiderPlannerUpdated()));
   time_.start();
-  planner_thread_.start();
 
-  xpider_location_=NULL;
+  ptr_location_=NULL;
 }
 OptiService::~OptiService(){
   //reset client
@@ -38,10 +37,8 @@ OptiService::~OptiService(){
   ptr_cmd_thread_->deleteLater();
   delete ptr_cmd_thread_;
 
-  planner_thread_.exit();
-  planner_thread_.deleteLater();
   QThread::msleep(100);
-  if(xpider_location_)delete xpider_location_;
+  if(ptr_location_)delete ptr_location_;
 }
 
 int OptiService::StartService(){
@@ -56,43 +53,31 @@ int OptiService::StartService(){
   this->listen(QHostAddress::Any,SERVER_PORT);
   qDebug()<<tr("[%1,%2]Opti service started on %3").arg(__FILE__).arg(__LINE__).arg(SERVER_PORT);
 
-  //init xpider location
-  xpider_location_ = new XpiderLocation();
-  xpider_location_->GenerateInitLocation(0,0,5,5);
-  XpiderLocation::LandmarkList &list = xpider_location_->Landmarks();
-  int count=0;
-  for(auto iter=list.begin();iter!=list.end();++iter){
-    XpiderLocation::Point point = *iter;
-    emit landmarkUpdate(count,point.x,point.y);
-    ++count;
-  }
-
   //step3. start some socket threads
+  const int host_size=22;
+  const char* host_list[]={"192.168.1.22",
+                           "192.168.1.23",
+                          "192.168.1.50",
+                          "192.168.1.51",
+                          "192.168.1.52",
+                          "192.168.1.53",
+                          "192.168.1.54",
+                          "192.168.1.55",
+                          "192.168.1.56",
+                          "192.168.1.57",
+                          "192.168.1.58",
+                          "192.168.1.59",
+                          "192.168.1.60",
+                          "192.168.1.61",
+                          "192.168.1.62",
+                          "192.168.1.63",
+                          "192.168.1.64",
+                          "192.168.1.65",
+                          "192.168.1.66",
+                          "192.168.1.67",
+                          "192.168.1.68",
+                          "192.168.1.69"};
   do{
-    const int host_size=22;
-    const char* host_list[]={"192.168.1.22",
-                             "192.168.1.23",
-                            "192.168.1.50",
-                            "192.168.1.51",
-                            "192.168.1.52",
-                            "192.168.1.53",
-                            "192.168.1.54",
-                            "192.168.1.55",
-                            "192.168.1.56",
-                            "192.168.1.57",
-                            "192.168.1.58",
-                            "192.168.1.59",
-                            "192.168.1.60",
-                            "192.168.1.61",
-                            "192.168.1.62",
-                            "192.168.1.63",
-                            "192.168.1.64",
-                            "192.168.1.65",
-                            "192.168.1.66",
-                            "192.168.1.67",
-                            "192.168.1.68",
-                            "192.168.1.69"};
-
     const int host_port=80;
     for(int i=0;i<host_size;++i){
       XpiderSocketThread * socket = new XpiderSocketThread();
@@ -104,8 +89,46 @@ int OptiService::StartService(){
     }
   }while(0);
 
+  //init xpider location (the land mark loacation )
+  do{
+    ptr_location_ = new XpiderLocation();
+    ptr_location_->GenerateInitLocation(0,0,5,5);
+    XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
+
+    int counter=0;
+    QJsonDocument jdoc;
+    QJsonArray jarray;
+    for(auto iter=list.begin();iter!=list.end();++iter){
+      XpiderLocation::Point point = *iter;
+      QJsonObject jobj;
+
+      if(counter<host_size){
+        QString str_id = QString(host_list[counter]);
+        jobj["id"]= str_id.split('.').last();
+      }else{
+        jobj["id"]= QString("[%1]").arg(counter);
+      }
+      jobj["x"] = point.x;
+      jobj["y"] = point.y;
+      //emit landmarkUpdate(count,point.x,point.y);
+      jarray.append(jobj);
+      ++counter;
+    }
+    jdoc.setArray(jarray);
+    emit landmarkListUpdate(QString(jdoc.toJson()));
+  }while(0);
+
+  //init universal retry timer
   timer_retry_.start(XpiderSocketThread::INTERVAL_RETRY);
+
+  //init command framework background thread
   ptr_cmd_thread_ = new CommandThread;
+
+  //init planner thread
+  ptr_planner_thread_ = new TrajectoryThread;
+
+  //clear the target mask
+  ui_target_mask_.clear();
   return this->serverPort();
 }
 
@@ -121,97 +144,152 @@ void OptiService::onNewConnection(){
 }
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
-  std::vector<xpider_opti_t> opti_info_list;
-  std::vector<xpider_opti_t> xpider_info_list;
-  opti_info_list.clear();
-
-  //qDebug()<<tr("[%1,%2]rx_payload:").arg(__FILE__).arg(__LINE__);
-  //qDebug()<<QString(payload)<<endl;
-  //step1.find the alive xpider list
-#if 1
-  const int id_size = XpiderSocketThread::g_xpider_map_.size();
-  uint32_t id_list[id_size];
-  int id_len=0;
-
-  //qDebug()<<tr("[%1,%2]alive xpiders are:").arg(__FILE__).arg(__LINE__);
-  for(auto iter=XpiderSocketThread::g_xpider_map_.begin();
-      iter!=XpiderSocketThread::g_xpider_map_.end();
-      ++iter){
-    XpiderSocketThread* xpider = iter->second;
-    if(xpider && xpider->Available()){
-      id_list[id_len] = xpider->Id();
-      ++id_len;
-      //qDebug()<<tr("%1, ").arg(xpider->Id());
-    }
-  }
-  //qDebug()<<endl;
-#else
-  const int id_size = XpiderSocket::g_xpider_map_.size();
-  uint32_t id_list[]={1,2};
-  int id_len=2;
-  printf("[%s,%d]id_size=%d\n",__FILE__,__LINE__,id_size);
-#endif
-
   if(SERVER_UPLAOD_REQ==cmdid){
-    QString message(payload);
-    QStringList record_list = message.split('\n');
-    for(int i=0;i<record_list.size();++i){
-      QString record_line = record_list[i];
-      record_line.remove('\"');
+    std::vector<xpider_opti_t> opti_info_list;
+    opti_info_list.clear();
 
-      QStringList value_list = record_line.split(',');
-      if(value_list.size()<3)break;
-      xpider_opti_t opti_info;
-      opti_info.x  = value_list[0].toFloat();
-      opti_info.y  = value_list[1].toFloat();
-      opti_info.theta = value_list[2].toFloat();
+    //step1.parse the payload infomation
+    do{
+      QTextStream stream;
+      QString str_payload(payload);
+      stream.setString(&str_payload);
+      while(!stream.atEnd()){
+        QString record_line = stream.readLine();
+        record_line.remove('\"');
 
-      //save to list
-      opti_info_list.push_back(opti_info);
-      //emit xpiderUpdate(i,opti_info.theta,opti_info.x,opti_info.y,false);
-    }
-#if 1
-    //step1.call tracing processor
-    //TODO: call YE TIAN code
-    if(opti_info_list.size() && id_len>0){
-      xpider_info_list.clear();
-      xpider_location_->GetRobotLocation(opti_info_list,id_list,id_len,xpider_info_list);
-    }
+        QStringList value_list = record_line.split(',');
+        if(value_list.size()<3)break;
 
-    //step2. wrap in JSON and push to signal
-    QJsonDocument jdoc;
-    QJsonArray jarray;
-    for(auto iter = opti_info_list.begin();iter!=opti_info_list.end();++iter){
-      xpider_opti_t raw = *iter;
-      QJsonObject jobj;
-      jobj["id"]=-1;
-      jobj["theta"]= raw.theta;
-      jobj["x"] = raw.x;
-      jobj["y"] = raw.y;
-      for(auto xiter=xpider_info_list.begin();xiter!=xpider_info_list.end();++xiter){
-        xpider_opti_t xpider = *xiter;
-        if(raw.x==xpider.x && raw.y == xpider.y){
-          jobj["id"] = (int)xpider.id;
-          break;
-        }
+        xpider_opti_t opti_info;
+        opti_info.x  = value_list[0].toFloat();
+        opti_info.y  = value_list[1].toFloat();
+        opti_info.theta = value_list[2].toFloat();
+
+        //save to list
+        opti_info_list.push_back(opti_info);
       }
-      jarray.push_back(jobj);
+    }while(0);
+
+
+    //step2. compute the available xpider id list
+    const int id_size = XpiderSocketThread::socket_list_.size();
+    uint32_t id_array[id_size];
+    int id_len=AvailableXpiderSocketID(id_array,id_size);
+
+    typedef struct temp_map_val_s{
+      xpider_opti_t *ptr_xpider;
+      xpider_target_point_t * ptr_target;
+    }temp_map_val_t;
+    QMap<QString, temp_map_val_t> temp_raw_map;
+
+    //step3.call tracing processor
+    if(opti_info_list.size() && id_len>0){
+      //step1. match all xpiders
+      ptr_planner_thread_->xpider_queue_.clear();
+      ptr_location_->GetRobotLocation(opti_info_list,id_array,id_len,ptr_planner_thread_->xpider_queue_);
+
+      //step2. match all targets
+      ptr_planner_thread_->target_queue_.clear();
+      SyncXpiderTarget(ptr_planner_thread_->xpider_queue_,ptr_planner_thread_->target_queue_);
+
+      for(int i=0;i<ptr_planner_thread_->xpider_queue_.size();++i){
+        xpider_opti_t xpider = ptr_planner_thread_->xpider_queue_[i];
+        xpider_target_point_t target = ptr_planner_thread_->target_queue_[i];
+        //also save it to a list, but only pointer
+        QString str_key = PointToString(QPointF(xpider.x,xpider.y));
+        temp_map_val_t value;
+        value.ptr_xpider = &xpider;
+        value.ptr_target = &target;
+        temp_raw_map.insert(str_key,value);//we are using point as an ID of the xpider!!
+      }
     }
-    jdoc.setArray(jarray);
-    emit xpiderListUpdate(QString(jdoc.toJson()));
+
+    //step4. wrap in JSON and push to signal
+    do{
+      QJsonDocument jdoc;
+      QJsonArray jarray;
+      for(auto iter = opti_info_list.begin();iter!=opti_info_list.end();++iter){
+        xpider_opti_t raw = *iter;
+        QJsonObject jobj;
+
+        jobj["theta"]= raw.theta;
+        jobj["x"] = raw.x;
+        jobj["y"] = raw.y;
+
+        //update ID
+        //HASH MAP checking is MUCH MUCH faster!!
+        QString str_key = PointToString(QPointF(raw.x,raw.y));
+        if(temp_raw_map.contains(str_key)){
+          temp_map_val_t value = temp_raw_map.value(str_key);
+          jobj["id"]=static_cast<int>(value.ptr_xpider->id);
+          jobj["target_x"] = value.ptr_target->target_x;
+          jobj["target_y"] = value.ptr_target->target_y;
+        }else{
+           jobj["id"]=-1;
+           jobj["target_x"] = 0;
+           jobj["target_y"] = 0;
+        }
+
+        //save to JARRAY
+        jarray.push_back(jobj);
+      }
+      jdoc.setArray(jarray);
+      emit xpiderListUpdate(QString(jdoc.toJson()));
+    }while(0);
 
 
-    //step3. check if we need to update all xpiders' plan
+    //step5. check if we need to update all xpiders' plan
     int current_time = time_.elapsed();
-    if(current_time-last_trigger_>INTERVAL_POST_TASK && is_planner_running_){
+    if(current_time-last_trigger_>INTERVAL_POST_TASK && is_planner_running_ && ptr_planner_thread_){
       //every 5sec
       last_trigger_ = current_time;
-      planner_.MoveToPostWork(target_map_,xpider_info_list);
-      emit plannerUpdate();
+      ptr_planner_thread_->start();
     }
-#endif
 
   }//end if(SERVER_UPLAOD_REQ==cmdid)
+}
+
+void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list, std::vector<xpider_target_point_t> &target_list)
+{
+  if(xpider_list.size()<=0)return;
+  target_list.clear();
+  for(auto iter=xpider_list.begin();iter!=xpider_list.end();++iter){
+    xpider_opti_t xpider = *iter;
+    xpider_target_point_t target;
+    target.id = xpider.id;
+    if(ui_target_mask_.count(xpider.id)){
+      QPointF pos = ui_target_mask_.value(xpider.id);
+      target.target_x = pos.x();
+      target.target_y = pos.y();
+    }else{
+      target.target_x = xpider.x;
+      target.target_y = xpider.y;
+    }
+    target_list.push_back(target);
+  }
+}
+
+int OptiService::AvailableXpiderSocketID(uint32_t id_array[], int id_size)
+{
+  if(id_array==NULL || id_size<=0)return 0;
+  int id_index=0;
+  int id_len=0;
+  for(auto iter=XpiderSocketThread::socket_list_.begin();
+      iter!=XpiderSocketThread::socket_list_.end();
+      ++iter)
+  {
+    XpiderSocketThread* xpider = *iter;
+    if(xpider && xpider->Available()){
+      id_array[id_len] = id_index;
+      ++id_len;
+    }
+    ++id_index;
+  }
+  return id_len;
+}
+
+QString OptiService::PointToString(const QPointF &point){
+  return QString("(%1,%2)").arg(point.x()).arg(point.y());
 }
 
 void OptiService::onClientDisconnected(){
@@ -222,99 +300,42 @@ void OptiService::onClientReadyRead(){
   if(client_==NULL)return;
   QByteArray rx_raw = client_->read(RX_MAX_SIZE);
   if(rx_raw.size()==0)return;
-  //qDebug()<<tr("[%1,%2] rx_raw:").arg(__FILE__).arg(__LINE__)<<endl;
-  //qDebug()<<QString(rx_raw)<<endl;
   protocol_.PushToProtocol(rx_raw);
-  //qDebug()<<tr("====================================================")<<endl;
 }
 
 void OptiService::pushTarget(unsigned int id, float x, float y){
-  xpider_target_point_t target;
-  target.id = id;
-  target.target_x = x;
-  target.target_y = y;
-  target_map_[id] = target;
+  ui_target_mask_.insert(id,QPointF(x,y));
 }
 
 void OptiService::removeTarget(unsigned int id){
-  if(target_map_.count(id)){
-    for(auto iter = target_map_.begin();iter!=target_map_.end();++iter){
-      if(iter->first==id){
-        target_map_.erase(iter++);
-        break;
-      }
-    }
+  //step1. remove target mask
+  if(ui_target_mask_.count(id)){
+    ui_target_mask_.remove(id);
   }
-  XpiderSocketThread* x= XpiderSocketThread::Socket(id);
+
+  //step2. stop the xpider
+  XpiderSocketThread* x= XpiderSocketThread::socket_list_.at(id);
   if(x)x->StopWalking();
 }
 
-void OptiService::startPlanner(bool b){
+void OptiService::clearTargets(){
+  XpiderSocketThread::XpiderList & xpider_list = XpiderSocketThread::socket_list_;
+  ui_target_mask_.clear();
+  for(auto iter=xpider_list.begin();iter!=xpider_list.end();++iter){
+    XpiderSocketThread* socket = *iter;
+    if(socket){
+      socket->StopWalking();
+    }
+  }
+}
+
+void OptiService::enablePlanner(bool b){
   is_planner_running_ = b;
 }
 
 void OptiService::runCommandText(QString cmd_text){
   qDebug()<<tr("[%1,%2] command text is:%3").arg(__FILE__).arg(__LINE__).arg(cmd_text);
-  emit commandRunning(true);
   ptr_cmd_thread_->StartCommandChain(cmd_text);
 }
 
-
-OptiPostWork::OptiPostWork(QObject *parent):QObject(parent){}
-
-void OptiPostWork::MoveToPostWork(std::map<uint32_t, xpider_target_point_t> &target_map, std::vector<xpider_opti_t> &info_list){
-  list_len_=0;
-  for(auto iter = target_map.begin();iter!=target_map.end();++iter){
-    target_list_[list_len_]  = iter->second;
-    uint32_t id =target_list_[list_len_].id;
-    for(auto  info_iter=info_list.begin();info_iter!=info_list.end();++info_iter){
-      xpider_opti_t info = *info_iter;
-      if(info.id==id){
-        xpider_list_[list_len_] = info;
-        break;
-      }
-    }
-    ++list_len_;
-  }
-
-  planner_.Reset(3.0,2.0,target_list_,list_len_);
-}
-
-void OptiPostWork::onXpiderPlannerUpdated(){
-  if(list_len_<=0)return;
-
-  //step1.call trajectory planner
-  //TODO: call XIAO BO code
-  const int action_size = list_len_;
-  xpider_tp_t action_list[action_size];
-  int len = planner_.Plan(xpider_list_,list_len_,action_list,action_size);
-
-  //step2.call all xpiders to move
-  for(int i=0;i<len;++i){
-    XpiderSocketThread * socket = XpiderSocketThread::Socket(action_list[i].id);
-    if(socket){
-
-      QByteArray tx_pack;
-      uint8_t* tx_buffer;
-      uint16_t tx_length;
-      XpiderInfo info;
-      XpiderProtocol  protocol;
-      protocol.Initialize(&info);
-
-      //step1.set target angle & transform to tx buffer
-      info.rotate_speed = OptiService::XPIDER_ROTATE_SPEED;
-      info.rotate_rad = action_list[i].delta_theta;
-      info.walk_speed = OptiService::XPIDER_WALK_SPEED;
-      info.walk_step = action_list[i].detla_step;
-      protocol.GetBuffer(protocol.kAutoMove, &tx_buffer, &tx_length);
-
-      //step2. set tx_pack
-      tx_pack.append((char*)tx_buffer,tx_length);
-
-      //step3. tx pack
-      socket->SendMessage(tx_pack);
-    }
-  }
-
-}
 
