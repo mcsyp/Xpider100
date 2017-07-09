@@ -48,6 +48,9 @@ public:
 
   //run the command list in command thread framework
   Q_INVOKABLE void runCommandText(QString cmd_text);
+
+  Q_INVOKABLE bool csvLoadTargets(QString path);
+  Q_INVOKABLE bool csvSaveTargets(QString path);
 signals:
   void serviceInitializing();
 

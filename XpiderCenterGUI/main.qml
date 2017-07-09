@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
+import QtQuick.Dialogs 1.2
 
 ApplicationWindow {
     id:main_window_
@@ -45,6 +46,56 @@ ApplicationWindow {
             panel.raise();
             console.log("command panel list len:",command_list_.length);
         }
+    }
+
+    Button{
+        id:save_btn_
+        text:"Save Targets"
+        x:cmd_btn_.x+cmd_btn_.width+5
+        y:main_window_.height-cmd_btn_.height-5
+        onClicked: {
+            target_record_dialog_.is_saving_=true;
+            target_record_dialog_.title="Saving targets to .CSV"
+            target_record_dialog_.selectExisting=false
+            target_record_dialog_.selectFolder=false
+            target_record_dialog_.open()
+        }
+    }
+
+    Button{
+        id:load_btn_
+        text:"Load Targets"
+        x:save_btn_.x+save_btn_.width+5
+        y:main_window_.height-cmd_btn_.height-5
+        onClicked: {
+            target_record_dialog_.is_saving_=false;
+            target_record_dialog_.title="Loading .CSV target records."
+            target_record_dialog_.selectExisting=true
+            target_record_dialog_.open()
+        }
+    }
+
+    FileDialog{
+        id:target_record_dialog_
+        title: "Please choose a path to save"
+        folder: shortcuts.documents
+        nameFilters: ["*.csv"]
+        selectExisting: true
+        selectFolder:false
+        selectMultiple:false
+
+        property  bool is_saving_: false
+        onAccepted: {
+            if(is_saving_){
+                opti_server_.csvSaveTargets(target_record_dialog_.fileUrl)
+            }else{
+                opti_server_.csvLoadTargets(target_record_dialog_.fileUrl)
+            }
+        }
+        onRejected: {
+            console.log("fuck!")
+        }
+
     }
 
     function createCommanPanel(){

@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <qdebug.h>
 #include <QTextStream>
+#include <QFile>
 
 #include <stdio.h>
 
@@ -336,6 +337,48 @@ void OptiService::enablePlanner(bool b){
 void OptiService::runCommandText(QString cmd_text){
   qDebug()<<tr("[%1,%2] command text is:%3").arg(__FILE__).arg(__LINE__).arg(cmd_text);
   ptr_cmd_thread_->StartCommandChain(cmd_text);
+}
+
+bool OptiService::csvLoadTargets(QString path)
+{
+  qDebug()<<tr("[%1,%2]loading target records from %3").arg(__FILE__).arg(__LINE__).arg(path);
+  QFile file(path);
+  if(!file.open(QIODevice::ReadOnly)){
+    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(path);
+    return false;
+  }
+  QTextStream text(&file);
+
+  clearTargets();
+  while(!text.atEnd()){
+    QStringList record_list= text.readLine().split(",");
+    unsigned int id = static_cast<unsigned int>(record_list[0].toInt());
+    float x = record_list[1].toFloat();
+    float y = record_list[2].toFloat();
+    pushTarget(id,x,y);
+  }
+  file.close();
+  return true;
+}
+
+bool OptiService::csvSaveTargets(QString path)
+{
+  qDebug()<<tr("[%1,%2]saving target records to %3").arg(__FILE__).arg(__LINE__).arg(path);
+  QFile file(path);
+  if(!file.open(QIODevice::WriteOnly)){
+    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(path);
+    return false;
+  }
+  QTextStream text(&file);
+  QList<unsigned int> key_list = ui_target_mask_.keys();
+  for(int i=0;i<key_list.size();++i){
+    unsigned int id = key_list.at(i);
+    QPointF p = ui_target_mask_.value(id);
+    text<<id<<","<<p.x()<<","<<p.y()<<endl;
+
+  }
+  file.close();
+  return true;
 }
 
 
