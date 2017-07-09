@@ -130,11 +130,5 @@ ApplicationWindow {
              console.log("command panel list intialized:",command_list_.length);
          }
     }
-    /*
-    CommandPanel{
-        id:cmd_panel_;
-        visible: false;
-    }
-    */
 
 }

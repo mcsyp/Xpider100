@@ -375,7 +375,6 @@ bool OptiService::csvSaveTargets(QString path)
     unsigned int id = key_list.at(i);
     QPointF p = ui_target_mask_.value(id);
     text<<id<<","<<p.x()<<","<<p.y()<<endl;
-
   }
   file.close();
   return true;
