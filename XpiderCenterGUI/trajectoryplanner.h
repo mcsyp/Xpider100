@@ -9,7 +9,7 @@ const float PI=3.14159;
 class TrajectoryPlanner {
 
 public:
-  static constexpr int MAX_TARGET_SIZE=200;
+  static constexpr int MAX_TARGET_SIZE=10000;
   TrajectoryPlanner();
     /*purpose: reset the planer with the area width and height
      * Target area info also included
@@ -35,15 +35,15 @@ public:
      * return the length of the out_action array
      */
   int Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_action[], int out_size);
-public:
+private:
   int max_dis_id;
   float max_dis_x;
   float max_dis_y;
-  float min_dis;                       //每只之间的安全距离
-  float min_target_dis;                //近似到达目的地的距离
+  float min_dis;                           //每只之间的安全距离
+  float min_target_dis;                    //近似到达目的地的距离
   int wait_max_number;                     //等待最大次数
   xpider_target_point_t target_list_[MAX_TARGET_SIZE];
-  int id_to_id[MAX_TARGET_SIZE];
+  int id_to_id[5050];
   int target_len_;
 };
 
