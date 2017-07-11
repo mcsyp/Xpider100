@@ -17,6 +17,7 @@ CommandLed::CommandLed(QObject* parent):CommandParser(parent){
   text<<"led [index] -l [r] [g] [b] -r [r] [g] [b]"<<endl;
   text<<"eg: led 10 -l 255 128 190 -r 230 154 31"<<endl;
   text<<"eg: led 10 -b 255 128 190"<<endl;
+  text<<"eg: led all -b 255 128 190"<<endl;
 }
 
 bool CommandLed::Exec(QStringList argv){

@@ -6,7 +6,7 @@ Item {
     Text{
         anchors.centerIn: parent
         text:cross_id
-        font.pixelSize: 10
+        font.pixelSize: 15
         color: "#222222"
     }
 }

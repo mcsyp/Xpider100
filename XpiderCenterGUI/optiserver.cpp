@@ -6,6 +6,7 @@
 #include <qdebug.h>
 #include <QTextStream>
 #include <QFile>
+#include <QUrl>
 
 #include <stdio.h>
 
@@ -13,6 +14,7 @@
 #include "xpider_ctl/xpider_info.h"
 #include "xpider_ctl/xpider_protocol.h"
 
+OptiService * OptiService::ptr_instance=NULL;
 OptiService::OptiService(QObject *parent) :QTcpServer(parent)
 {
   client_=NULL;
@@ -23,6 +25,14 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   time_.start();
 
   ptr_location_=NULL;
+}
+
+OptiService *OptiService::Singleton(){
+  if(ptr_instance==NULL){
+    OptiService * service=new OptiService();
+    ptr_instance = service;
+  }
+  return ptr_instance;
 }
 OptiService::~OptiService(){
   //reset client
@@ -55,29 +65,63 @@ int OptiService::StartService(){
   qDebug()<<tr("[%1,%2]Opti service started on %3").arg(__FILE__).arg(__LINE__).arg(SERVER_PORT);
 
   //step3. start some socket threads
-  const int host_size=22;
-  const char* host_list[]={"192.168.1.22",
-                           "192.168.1.23",
-                          "192.168.1.50",
-                          "192.168.1.51",
-                          "192.168.1.52",
-                          "192.168.1.53",
-                          "192.168.1.54",
-                          "192.168.1.55",
-                          "192.168.1.56",
-                          "192.168.1.57",
-                          "192.168.1.58",
-                          "192.168.1.59",
-                          "192.168.1.60",
-                          "192.168.1.61",
-                          "192.168.1.62",
-                          "192.168.1.63",
-                          "192.168.1.64",
-                          "192.168.1.65",
-                          "192.168.1.66",
-                          "192.168.1.67",
-                          "192.168.1.68",
-                          "192.168.1.69"};
+  const int host_size=49;
+  const char* host_list[]={ "192.168.1.50",
+                            "192.168.1.51",
+                            "192.168.1.52",
+                            "192.168.1.53",
+                            "192.168.1.54",
+                            "192.168.1.55",
+                            "192.168.1.56",
+                            "192.168.1.57",
+                            "192.168.1.58",
+                            "192.168.1.59",
+                            "192.168.1.60",
+                            "192.168.1.61",
+                            "192.168.1.62",
+                            "192.168.1.63",
+                            "192.168.1.64",
+                            "192.168.1.65",
+                            "192.168.1.66",
+                            "192.168.1.67",
+                            "192.168.1.68",
+                            "192.168.1.69",
+//                          "192.168.1.70",
+                            "192.168.1.71",
+                            "192.168.1.72",
+                            "192.168.1.73",
+                            "192.168.1.74",
+                            "192.168.1.75",
+//                          "192.168.1.76",
+                            "192.168.1.77",
+                            "192.168.1.78",
+                            "192.168.1.79",
+                            "192.168.1.80",
+                            "192.168.1.81",
+//                          "192.168.1.82",
+                            "192.168.1.83",
+                            "192.168.1.84",
+                            "192.168.1.85",
+                            "192.168.1.86",
+                            "192.168.1.87",
+                            "192.168.1.88",
+                            "192.168.1.89",
+                            "192.168.1.90",
+                            "192.168.1.91",
+                            "192.168.1.92",
+                            "192.168.1.93",
+                            "192.168.1.94",
+                            "192.168.1.95",
+//                          "192.168.1.96",
+                            "192.168.1.97",
+                            "192.168.1.98",
+                            "192.168.1.99",
+                            "192.168.1.100",
+                            "192.168.1.101",
+                            "192.168.1.102",
+//                          "192.168.1.103",
+                            "192.168.1.104",
+                          };
   do{
     const int host_port=80;
     for(int i=0;i<host_size;++i){
@@ -93,7 +137,7 @@ int OptiService::StartService(){
   //init xpider location (the land mark loacation )
   do{
     ptr_location_ = new XpiderLocation();
-    ptr_location_->GenerateInitLocation(0,0,5,5);
+    ptr_location_->GenerateInitLocation(1,0,7,7);
     XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
 
     int counter=0;
@@ -177,12 +221,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
     uint32_t id_array[id_size];
     int id_len=AvailableXpiderSocketID(id_array,id_size);
 
-    typedef struct temp_map_val_s{
-      xpider_opti_t *ptr_xpider;
-      xpider_target_point_t * ptr_target;
-    }temp_map_val_t;
-    QMap<QString, temp_map_val_t> temp_raw_map;
-
+    QMap<QString, xpider_opti_t> temp_raw_map;
     //step3.call tracing processor
     if(opti_info_list.size() && id_len>0){
       //step1. match all xpiders
@@ -190,18 +229,14 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
       ptr_location_->GetRobotLocation(opti_info_list,id_array,id_len,ptr_planner_thread_->xpider_queue_);
 
       //step2. match all targets
-      ptr_planner_thread_->target_queue_.clear();
-      SyncXpiderTarget(ptr_planner_thread_->xpider_queue_,ptr_planner_thread_->target_queue_);
+      SyncXpiderTarget(ptr_planner_thread_->xpider_queue_);
 
       for(int i=0;i<ptr_planner_thread_->xpider_queue_.size();++i){
         xpider_opti_t xpider = ptr_planner_thread_->xpider_queue_[i];
-        xpider_target_point_t target = ptr_planner_thread_->target_queue_[i];
         //also save it to a list, but only pointer
+
         QString str_key = PointToString(QPointF(xpider.x,xpider.y));
-        temp_map_val_t value;
-        value.ptr_xpider = &xpider;
-        value.ptr_target = &target;
-        temp_raw_map.insert(str_key,value);//we are using point as an ID of the xpider!!
+        temp_raw_map.insert(str_key,xpider);//we are using point as an ID of the xpider!!
       }
     }
 
@@ -221,10 +256,10 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         //HASH MAP checking is MUCH MUCH faster!!
         QString str_key = PointToString(QPointF(raw.x,raw.y));
         if(temp_raw_map.contains(str_key)){
-          temp_map_val_t value = temp_raw_map.value(str_key);
-          jobj["id"]=static_cast<int>(value.ptr_xpider->id);
-          jobj["target_x"] = value.ptr_target->target_x;
-          jobj["target_y"] = value.ptr_target->target_y;
+          xpider_opti_t value = temp_raw_map.value(str_key);
+          jobj["id"]=static_cast<int>(value.id);
+          jobj["target_x"] = value.target_x;
+          jobj["target_y"] = value.target_y;
         }else{
            jobj["id"]=-1;
            jobj["target_x"] = 0;
@@ -250,23 +285,22 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
   }//end if(SERVER_UPLAOD_REQ==cmdid)
 }
 
-void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list, std::vector<xpider_target_point_t> &target_list)
+void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)
 {
   if(xpider_list.size()<=0)return;
-  target_list.clear();
-  for(auto iter=xpider_list.begin();iter!=xpider_list.end();++iter){
-    xpider_opti_t xpider = *iter;
-    xpider_target_point_t target;
-    target.id = xpider.id;
-    if(ui_target_mask_.count(xpider.id)){
-      QPointF pos = ui_target_mask_.value(xpider.id);
-      target.target_x = pos.x();
-      target.target_y = pos.y();
+
+  for(int i=0;i<xpider_list.size();++i){
+    xpider_opti_t *xpider = &xpider_list[i];
+    if(ui_target_mask_.count(xpider->id)){
+      QPointF pos = ui_target_mask_.value(xpider->id);
+      xpider->target_x = pos.x();
+      xpider->target_y = pos.y();
+      xpider->valid_target = true;
     }else{
-      target.target_x = xpider.x;
-      target.target_y = xpider.y;
+      xpider->valid_target = false;
+      xpider->target_x = xpider->x;
+      xpider->target_y = xpider->y;
     }
-    target_list.push_back(target);
   }
 }
 
@@ -305,6 +339,7 @@ void OptiService::onClientReadyRead(){
 }
 
 void OptiService::pushTarget(unsigned int id, float x, float y){
+  //qDebug()<<tr("[%1,%2] target:%3, x:%4, y%5").arg(__FILE__).arg(__LINE__).arg(id).arg(x).arg(y);
   ui_target_mask_.insert(id,QPointF(x,y));
 }
 
@@ -341,14 +376,15 @@ void OptiService::runCommandText(QString cmd_text){
 
 bool OptiService::csvLoadTargets(QString path)
 {
-  qDebug()<<tr("[%1,%2]loading target records from %3").arg(__FILE__).arg(__LINE__).arg(path);
-  QFile file(path);
+  QString file_path = QUrl(path).path();
+  QFile file(file_path);
   if(!file.open(QIODevice::ReadOnly)){
-    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(path);
+    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(file_path);
     return false;
   }
   QTextStream text(&file);
 
+  qDebug()<<tr("[%1,%2]loading target records from %3").arg(__FILE__).arg(__LINE__).arg(file_path);
   clearTargets();
   while(!text.atEnd()){
     QStringList record_list= text.readLine().split(",");
@@ -364,11 +400,15 @@ bool OptiService::csvLoadTargets(QString path)
 bool OptiService::csvSaveTargets(QString path)
 {
   qDebug()<<tr("[%1,%2]saving target records to %3").arg(__FILE__).arg(__LINE__).arg(path);
-  QFile file(path);
+  QUrl url(path);
+  QString file_path = url.path();
+  QFile file(file_path);
   if(!file.open(QIODevice::WriteOnly)){
-    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(path);
+    qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(file_path);
     return false;
   }
+
+  qDebug()<<tr("[%1,%2]Saving to %3").arg(__FILE__).arg(__LINE__).arg(file_path);
   QTextStream text(&file);
   QList<unsigned int> key_list = ui_target_mask_.keys();
   for(int i=0;i<key_list.size();++i){

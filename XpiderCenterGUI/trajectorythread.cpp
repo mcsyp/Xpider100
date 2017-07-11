@@ -8,13 +8,17 @@ TrajectoryThread::TrajectoryThread(QObject* parent):QThread(parent){
 
 }
 void TrajectoryThread::run(){
-  if(xpider_queue_.size()==0 || target_queue_.size()==0){
+  if(xpider_queue_.size()==0){
     return;
   }
   //step1.call trajectory planner
   const int action_size = xpider_queue_.size();
   xpider_tp_t action_list[action_size];
-  int action_len = planner_.Plan(xpider_queue_,target_queue_,action_list,action_size);
+  xpider_opti_t xpider_array[xpider_queue_.size()];
+  for(int i=0;i<xpider_queue_.size();++i){
+    xpider_array[i] = xpider_queue_[i];
+  }
+  int action_len = planner_.Plan(xpider_array,xpider_queue_.size(),action_list,action_size);
 
   //step2.call all xpiders to move
   for(int i=0;i<action_len;++i){

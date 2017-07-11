@@ -17,6 +17,8 @@ public:
 
   void StartCommandChain(QString &command_text);
   virtual void run();
+
+  void RunSyncTask();
 signals:
 
 public slots:
@@ -26,6 +28,7 @@ protected:
   QMap<QString,CommandParser*> cmd_map_;
   QString cmd_text_;
   int index_;
+  QMap<QString,CommandParser*> syn_tasklist_;
 };
 
 
@@ -43,7 +46,13 @@ public:
    * false, if the command is invalid or not reconigzed
    */
   virtual bool Exec(QStringList argv)=0;
+
+  //this task happens in main frame thread
+  virtual bool SyncTask(){return false;}
+
   virtual const QString & Example() const=0;
   virtual const QString & Key() const=0;//the command word
+public:
+  bool is_sync_;
 };
 #endif // COMMANDTHREAD_H

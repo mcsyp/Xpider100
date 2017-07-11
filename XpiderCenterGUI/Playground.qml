@@ -12,7 +12,6 @@ Rectangle {
     property var real_width_:3.0 //3 meter
     property var real_height_:2.0 //2 meter
 
-    property var selected_xpider_index_:-1
     property var reset_pos_:-500
 
 
@@ -70,22 +69,30 @@ Rectangle {
         return [real_x,real_y];
     }
 
+    Timer{
+        id:target_timer
+        repeat: true
+        interval: 1000
+        onTriggered: {
+
+        }
+    }
 
     MouseArea{
-        anchors.fill: parent
+        anchors.fill: parent        
+        property var selected_xpider_index_:-1
         onClicked: {
-            selected_xpider_index_ = selectXpider(mouse.x,mouse.y);
-            if(selected_xpider_index_>=0){
+            var index = selectXpider(mouse.x,mouse.y);
+            //console.log("selected index:",selected_xpider_index_," mouse_index:",index);
+            if(selected_xpider_index_>=0 && index<0 && index!==-2){
                 var dev_id = xpider_queue_[selected_xpider_index_].dev_id;
-                //target_queue_[selected_xpider_index_].x = mouse.x
-                //target_queue_[selected_xpider_index_].y = mouse.y
-                //target_queue_[selected_xpider_index_].dev_id = dev_id;
-                //target_queue_[selected_xpider_index_].show();
 
                 //push target to c++
                 var real_pos = convertFromScreenToReal(mouse.x,mouse.y);
                 opti_server_.pushTarget(dev_id,real_pos[0],real_pos[1]);
-                console.log("selected target id:",dev_id," x:",real_pos[0]," y:",real_pos[1]);
+                //console.log("selected target id:",dev_id," x:",real_pos[0]," y:",real_pos[1]);
+            }else{
+                selected_xpider_index_ = index;
             }
         }
     }
@@ -103,15 +110,12 @@ Rectangle {
 
         //console.log("min_dis is:",min_dis);
         if(min_dis<40 && xpider_queue_[min_index].dev_id>=0){
-            var count=0
             for(var i=0;i<xpider_queue_.length;++i){
                 var selected = (i===min_index && !xpider_queue_[i].selected_);
                 xpider_queue_[i].setSelected(selected);
-                if(selected){
-                    ++count;
-                }
             }
-            if(count>0)return min_index;
+            if(xpider_queue_[min_index].selected_) return min_index;
+            else return -2;
         }
         return -1;
     }
@@ -127,16 +131,10 @@ Rectangle {
             for(var i=0;i<xpider_queue_.length;++i){
                 if(i<xpider_list.length){
                     var xpider = xpider_list[i];
-                    console.log("id:",xpider.id,
-                                " theta:",xpider.theta,
-                                " x:",xpider.x,
-                                " y:",xpider.y,
-                                " target_x:",xpider.target_x,
-                                " target_y:",xpider.target_y);
 
                     //show xpider
                     var screen_pos=convertFromRealToScreen(xpider.x,xpider.y);
-                    xpider_queue_[i].x = screen_pos[1];
+                    xpider_queue_[i].x = screen_pos[0];
                     xpider_queue_[i].y = screen_pos[1];
                     var angle = (90-xpider.theta*180.0/Math.PI)%360
                     xpider_queue_[i].rotation=angle;
@@ -148,7 +146,13 @@ Rectangle {
                         screen_pos=convertFromRealToScreen(xpider.target_x,xpider.target_y);
                         target_queue_[i].x = screen_pos[0]
                         target_queue_[i].y = screen_pos[1]
+                        target_queue_[i].dev_id = xpider.id;
                         target_queue_[i].visible=true;
+                        //console.log("id:",xpider.id,
+                        //            " x:",xpider_queue_[i].x,
+                        //            " y:",xpider_queue_[i].y,
+                        //            " target_x:",target_queue_[i].x,
+                        //            " target_y:",target_queue_[i].y);
                     }
                 }else{
                     xpider_queue_[i].visible = false;

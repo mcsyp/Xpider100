@@ -71,6 +71,7 @@ ApplicationWindow {
             target_record_dialog_.is_saving_=false;
             target_record_dialog_.title="Loading .CSV target records."
             target_record_dialog_.selectExisting=true
+            target_record_dialog_.selectFolder=false
             target_record_dialog_.open()
         }
     }
@@ -125,8 +126,7 @@ ApplicationWindow {
     Connections{
         target:opti_server_
         onServiceInitializing:{
-              createCommanPanel();
-
+             createCommanPanel();
              console.log("command panel list intialized:",command_list_.length);
          }
     }

@@ -20,6 +20,8 @@
 
 class OptiService : public QTcpServer{
   Q_OBJECT
+protected:
+  explicit OptiService(QObject *parent = 0);
 public:
   static constexpr int SERVER_PORT= 8000;//this server works at this port.
   static constexpr int RX_MAX_SIZE= 6000;
@@ -32,7 +34,7 @@ public:
     SERVER_UPLAOD_REQ=0x9,
     SERVER_UPLAOD_ACK=0xA,
   };
-  explicit OptiService(QObject *parent = 0);
+  static OptiService* Singleton();
   virtual ~OptiService();
 
   //start the server
@@ -56,7 +58,8 @@ signals:
 
   void landmarkListUpdate(QString str_json);
   void xpiderListUpdate(QString str_json);
-
+protected:
+  static OptiService* ptr_instance;
 protected slots:
   void onClientDisconnected();
   void onClientReadyRead();
@@ -68,9 +71,8 @@ private:
   /*purpose: this will sync the xpider opti pos and target pos by the sync flag in target strcuture
    *input:
    * @xpider_list: the vector saves location-processed xpider opti, with available ID in it.
-   * @target_list: the vector saves the processed target list, with non-info in it
    */
-  void SyncXpiderTarget(std::vector<xpider_opti_t> & xpider_list, std::vector<xpider_target_point_t>& target_list);
+  void SyncXpiderTarget(std::vector<xpider_opti_t> & xpider_list);
 
   /*purpose: process the XpiderSocketThread list to find out those availible xpider's index
    *input:

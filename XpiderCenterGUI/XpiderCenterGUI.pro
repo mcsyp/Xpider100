@@ -14,7 +14,8 @@ SOURCES += main.cpp \
     commandthread.cpp \
     commandled.cpp \
     commanddelay.cpp \
-    trajectorythread.cpp
+    trajectorythread.cpp \
+    commandaim.cpp
 
 RESOURCES += qml.qrc
 
@@ -56,7 +57,8 @@ HEADERS += \
     commandled.h \
     commanddelay.h \
     global_xpider.h \
-    trajectorythread.h
+    trajectorythread.h \
+    commandaim.h
 
 DISTFILES += \
     main.qml

@@ -8,15 +8,14 @@ int main(int argc, char *argv[])
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   QGuiApplication app(argc, argv);
 
-  OptiService opti;
-
+  OptiService *ptr_service = OptiService::Singleton();
   QQmlApplicationEngine engine;
 
   QQmlContext * ctx = engine.rootContext();
-  ctx->setContextProperty("opti_server_",&opti);
+  ctx->setContextProperty("opti_server_",ptr_service);
   engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
-  opti.StartService();
+  ptr_service->StartService();
 
   return app.exec();
 }

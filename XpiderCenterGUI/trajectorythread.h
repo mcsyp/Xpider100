@@ -17,7 +17,6 @@ public:
 public:
   TrajectoryPlanner planner_;
   std::vector<xpider_opti_t> xpider_queue_;
-  std::vector<xpider_target_point_t> target_queue_;
 };
 
 #endif // TRAJECTORYTHREAD_H
