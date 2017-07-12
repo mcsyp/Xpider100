@@ -18,6 +18,8 @@
 #include "commandthread.h"
 #include "trajectorythread.h"
 
+#define CONFIG_XPDIER_IP_TXT "xpider_ip.txt"
+
 class OptiService : public QTcpServer{
   Q_OBJECT
 protected:

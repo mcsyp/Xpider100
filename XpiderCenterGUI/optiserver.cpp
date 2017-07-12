@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <qdebug.h>
 #include <QTextStream>
+#include <QStringList>
 #include <QFile>
 #include <QUrl>
 
@@ -64,67 +65,25 @@ int OptiService::StartService(){
   this->listen(QHostAddress::Any,SERVER_PORT);
   qDebug()<<tr("[%1,%2]Opti service started on %3").arg(__FILE__).arg(__LINE__).arg(SERVER_PORT);
 
-  //step3. start some socket threads
-  const int host_size=49;
-  const char* host_list[]={ "192.168.1.50",
-                            "192.168.1.51",
-                            "192.168.1.52",
-                            "192.168.1.53",
-                            "192.168.1.54",
-                            "192.168.1.55",
-                            "192.168.1.56",
-                            "192.168.1.57",
-                            "192.168.1.58",
-                            "192.168.1.59",
-                            "192.168.1.60",
-                            "192.168.1.61",
-                            "192.168.1.62",
-                            "192.168.1.63",
-                            "192.168.1.64",
-                            "192.168.1.65",
-                            "192.168.1.66",
-                            "192.168.1.67",
-                            "192.168.1.68",
-                            "192.168.1.69",
-//                            "192.168.1.70",
-                            "192.168.1.71",
-                            "192.168.1.72",
-                            "192.168.1.73",
-                            "192.168.1.74",
-                            "192.168.1.75",
-//                            "192.168.1.76",
-                            "192.168.1.77",
-                            "192.168.1.78",
-                            "192.168.1.79",
-                            "192.168.1.80",
-                            "192.168.1.81",
-//                            "192.168.1.82",
-                            "192.168.1.83",
-                            "192.168.1.84",
-                            "192.168.1.85",
-                            "192.168.1.86",
-                            "192.168.1.87",
-                            "192.168.1.88",
-                            "192.168.1.89",
-                            "192.168.1.90",
-                            "192.168.1.91",
-                            "192.168.1.92",
-                            "192.168.1.93",
-                            "192.168.1.94",
-                            "192.168.1.95",
-//                            "192.168.1.96",
-                            "192.168.1.97",
-                            "192.168.1.98",
-                            "192.168.1.99",
-                            "192.168.1.100",
-                            "192.168.1.101",
-                            "192.168.1.102",
-//                            "192.168.1.103",
-                            "192.168.1.104",
-                          };
+  QStringList host_list;
   do{
+    QFile ip_file(CONFIG_XPDIER_IP_TXT);
+    if(!ip_file.open(QIODevice::ReadOnly)){
+      qDebug()<<tr("[%1,%2]Fail to load the %3").arg(__FILE__).arg(__LINE__).arg(CONFIG_XPDIER_IP_TXT);
+      exit(0);
+    }
+    QTextStream stream(&ip_file);
+    while(!stream.atEnd()){
+      QString str_ip = stream.readLine();
+      if(str_ip.startsWith(";"))continue;
+      if(str_ip.contains('.')){
+        host_list.append(str_ip);
+      }
+    }
+    ip_file.close();
+
     const int host_port=80;
-    for(int i=0;i<host_size;++i){
+    for(int i=0;i<host_list.size();++i){
       XpiderSocketThread * socket = new XpiderSocketThread();
       if(socket){
         QString name = host_list[i];
@@ -147,7 +106,7 @@ int OptiService::StartService(){
       XpiderLocation::Point point = *iter;
       QJsonObject jobj;
 
-      if(counter<host_size){
+      if(counter<host_list.size()){
         QString str_id = QString(host_list[counter]);
         jobj["id"]= str_id.split('.').last();
       }else{
@@ -155,7 +114,6 @@ int OptiService::StartService(){
       }
       jobj["x"] = point.x;
       jobj["y"] = point.y;
-      //emit landmarkUpdate(count,point.x,point.y);
       jarray.append(jobj);
       ++counter;
     }
@@ -251,13 +209,17 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         jobj["theta"]= raw.theta;
         jobj["x"] = raw.x;
         jobj["y"] = raw.y;
-
+        jobj["label"] = "UNKNOWN";
         //update ID
         //HASH MAP checking is MUCH MUCH faster!!
         QString str_key = PointToString(QPointF(raw.x,raw.y));
         if(temp_raw_map.contains(str_key)){
           xpider_opti_t value = temp_raw_map.value(str_key);
           jobj["id"]=static_cast<int>(value.id);
+          if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
+             QString host_name = XpiderSocketThread::socket_list_[static_cast<int>(value.id)]->Hostname();
+             jobj["label"]=host_name.split(".").last();
+          }
           jobj["target_x"] = value.target_x;
           jobj["target_y"] = value.target_y;
         }else{

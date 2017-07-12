@@ -26,7 +26,6 @@ public:
   static constexpr int RX_MAX_SIZE=128;
 
   static XpiderList socket_list_;
-  static XpiderSocketThread* Socket(int index);
 
   XpiderSocketThread(QObject* parent=NULL);
   virtual ~XpiderSocketThread();
@@ -42,6 +41,7 @@ public:
   bool Available() const;
 
   void StopWalking();
+  QString Hostname()const{ return host_name_;}
 
 public slots:
   void onTimeoutRetry();

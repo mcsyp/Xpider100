@@ -139,6 +139,7 @@ Rectangle {
                     var angle = (90-xpider.theta*180.0/Math.PI)%360
                     xpider_queue_[i].rotation=angle;
                     xpider_queue_[i].dev_id = xpider.id;
+                    xpider_queue_[i].label_ = xpider.label;
                     xpider_queue_[i].visible = true;
 
                     //show target

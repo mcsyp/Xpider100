@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "optiserver.h"
+#include <QDir>
 
 int main(int argc, char *argv[])
 {
@@ -12,6 +13,8 @@ int main(int argc, char *argv[])
   QQmlApplicationEngine engine;
 
   QQmlContext * ctx = engine.rootContext();
+  QString path = QDir::currentPath();
+  qDebug()<<path;
   ctx->setContextProperty("opti_server_",ptr_service);
   engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
