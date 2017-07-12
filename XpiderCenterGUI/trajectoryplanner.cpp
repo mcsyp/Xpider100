@@ -12,12 +12,24 @@ TrajectoryPlanner::TrajectoryPlanner()
 
 int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_action[],int out_size){
 
-  //GenerateTargetList(info, info_len);
-
-  float priority[200];
   qDebug()<<"info_len:"<<info_len;
 
-  //step1:计算要行走的优先级.    优先级数组长度和info[]相同，只有行走的有优先级，不行走的置为0
+  //step1:找到最远的距离点,定为标准点
+  float target_dis = 0;
+  for (int i=0; i<info_len; i++) {
+    if (info[i].valid_target == true) {
+      float target_dis_ = sqrt(pow(info[i].target_x,2)+pow(info[i].target_y,2));
+      if (target_dis_ > target_dis) {
+        target_dis = target_dis_;                //找到最大的距离值
+        max_dis_x = info[i].target_x;
+        max_dis_y = info[i].target_y;
+      }
+    }
+  }
+
+  //step2:计算要行走的优先级.    优先级数组长度和info[]相同，只有行走的有优先级，不行走的置为0
+  float priority[200];
+  float A[200];
   for (int i=0; i<info_len; i++) {
     if (info[i].valid_target == true) {
       float p = sqrt(pow((info[i].x-max_dis_x),2)+pow((info[i].y-max_dis_y),2));
@@ -40,60 +52,97 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
       if (info[i].target_y-info[i].y<0) {
         A1 = 2.0f*M_PI-A1;                             //A1~(0,2M_PI)
       }
+      A[i] = A1;
       float delta_rad1, delta_rad2;
       delta_rad1 = info[i].theta-A1;// - info[i].theta;
       delta_rad2 = delta_rad1<0 ? M_PI*2.0f+delta_rad1 : delta_rad1-M_PI*2.0f;
       delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
       out_action[i].id = info[i].id;
       out_action[i].delta_theta = delta_rad1;
-      out_action[i].detla_step = 4;
+      out_action[i].detla_step = info_target_dis<0.10 ? 2 : 4;
+      // out_action[i].detla_step = 4;
     }
   }
 
-  //step3:计算每个id之间的距离值.
+  //step3:路径规划.
   for (int i = 0; i<info_len; i++) {
-    if (info[i].valid_target == true) {      //当i为需要移动的
+    if (info[i].valid_target == true) {          //i为需要移动的
       for (int j=0; j<info_len; j++) {
         if (info[i].id != info[j].id) {
           float D_dist = sqrt(pow((info[i].x-info[j].x),2)+pow((info[i].y-info[j].y),2));
           float d_dist = sqrt(pow(info[i].x-info[i].target_x,2)+pow(info[i].y-info[i].target_y,2));
-          qDebug()<<"D_dist:"<<D_dist;
-          qDebug()<<"d_dist:"<<d_dist;
           if (d_dist < min_target_dis) {         //如果近似到达终点，优先级降为0.
+            qDebug()<<"d_dist:"<<d_dist;
             priority[i] = 0;
           }
-          if (D_dist < min_dis) {
-            if (info[j].valid_target == false) {       //此时j为静止的蜘蛛;i旋转90°，看有无障碍物
 
-              out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;   //此处应该是距离目标的角度
-              qDebug()<<"+++++++++++++++++++++";
+          if (D_dist < min_dis) {
+            qDebug()<<"D_dist:"<<D_dist;
+            if (info[j].valid_target == false) {  //j是静止的蜘蛛
               float L = 0.15f;
               float R = 0.175f;
-              float x1 = info[i].x + L*cos(out_action[i].delta_theta);
-              float y1 = info[i].y + L*sin(out_action[i].delta_theta);
-              qDebug()<<"x1:"<<x1;
-              qDebug()<<"y1:"<<y1;
-              for (int k=0; k<info_len; k++) {
-                if (k!=i) {
-                  float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
-                  qDebug()<<"r:"<<r;
-                  if (r < R) {
-                    out_action[i].detla_step = 0;//有一只则置为0.
-                    break;
-                  } else {
-                    out_action[i].detla_step = 3;
-                  }
+              float x1 = info[i].x + L*cos(A[i]);
+              float y1 = info[i].y + L*sin(A[i]);
+              float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));//判断j是否位于i前面的圆内.
+              if (r < R) {                                 //j在圆内，i转90°走4步.
+                out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
+                out_action[i].detla_step = 3;
+              }                                            //j不在圆内，按预定角度步数走.
+            } else {                             //j是运动的蜘蛛
+              float L = 0.15f;
+              float R = 0.175f;
+              float x1 = info[i].x + L*cos(A[i]);
+              float y1 = info[i].y + L*sin(A[i]);
+              float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
+              if (r < R) {
+                if (priority[i] < priority[j]) {
+                  out_action[j].detla_step = 0;
+              } else {
+                  out_action[i].detla_step = 0;
                 }
               }
-            } else {
-              if (priority[i]<priority[j]) out_action[j].detla_step = 0;
-              if (priority[i]>priority[j]) out_action[i].detla_step = 0;
             }
           }
         }
       }
     }
   }
+
+//            if (info[j].valid_target == false) {       //此时j为静止的蜘蛛;第一种情况j不位于i与目标点的连线上。i可正常行走
+
+//            }
+//              out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;   //此处应该是距离目标的角度
+//              while (out_action[i].delta_theta > M_PI) out_action[i].delta_theta = out_action[i].delta_theta - M_PI;
+//              while (out_action[i].delta_theta < M_PI) out_action[i].delta_theta = out_action[i].delta_theta + M_PI;
+//              qDebug()<<"+++++++++++++++++++++";
+
+//              float L = 0.15f;
+//              float R = 0.175f;
+//              float x1 = info[i].x + L*cos(out_action[i].delta_theta);
+//              float y1 = info[i].y + L*sin(out_action[i].delta_theta);
+//              qDebug()<<"x1:"<<x1;
+//              qDebug()<<"y1:"<<y1;
+//              for (int k=0; k<info_len; k++) {
+//                if (k!=i) {
+//                  float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
+//                  qDebug()<<"r:"<<r;
+//                  if (r < R) {
+//                    out_action[i].detla_step = 0;//有一只则置为0.
+//                    break;
+//                  } else {
+//                    out_action[i].detla_step = 3;
+//                  }
+//                }
+//              }
+//            } else {
+//              if (priority[i]<priority[j]) out_action[j].detla_step = 0;
+//              if (priority[i]>priority[j]) out_action[i].detla_step = 0;
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
 
             /*
           if (priority[info_move[i].id] < priority[info_move[j].id]) {

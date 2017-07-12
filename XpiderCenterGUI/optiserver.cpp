@@ -86,19 +86,19 @@ int OptiService::StartService(){
                             "192.168.1.67",
                             "192.168.1.68",
                             "192.168.1.69",
-//                          "192.168.1.70",
+//                            "192.168.1.70",
                             "192.168.1.71",
                             "192.168.1.72",
                             "192.168.1.73",
                             "192.168.1.74",
                             "192.168.1.75",
-//                          "192.168.1.76",
+//                            "192.168.1.76",
                             "192.168.1.77",
                             "192.168.1.78",
                             "192.168.1.79",
                             "192.168.1.80",
                             "192.168.1.81",
-//                          "192.168.1.82",
+//                            "192.168.1.82",
                             "192.168.1.83",
                             "192.168.1.84",
                             "192.168.1.85",
@@ -112,14 +112,14 @@ int OptiService::StartService(){
                             "192.168.1.93",
                             "192.168.1.94",
                             "192.168.1.95",
-//                          "192.168.1.96",
+//                            "192.168.1.96",
                             "192.168.1.97",
                             "192.168.1.98",
                             "192.168.1.99",
                             "192.168.1.100",
                             "192.168.1.101",
                             "192.168.1.102",
-//                          "192.168.1.103",
+//                            "192.168.1.103",
                             "192.168.1.104",
                           };
   do{
@@ -137,7 +137,7 @@ int OptiService::StartService(){
   //init xpider location (the land mark loacation )
   do{
     ptr_location_ = new XpiderLocation();
-    ptr_location_->GenerateInitLocation(1,0,7,7);
+    ptr_location_->GenerateInitLocation(0.8,0,7,7);
     XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
 
     int counter=0;
@@ -382,6 +382,9 @@ void OptiService::runCommandText(QString cmd_text){
 bool OptiService::csvLoadTargets(QString path)
 {
   QString file_path = QUrl(path).path();
+#ifdef WIN32
+  file_path.remove(0,1);
+#endif
   QFile file(file_path);
   if(!file.open(QIODevice::ReadOnly)){
     qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(file_path);
@@ -407,6 +410,10 @@ bool OptiService::csvSaveTargets(QString path)
   qDebug()<<tr("[%1,%2]saving target records to %3").arg(__FILE__).arg(__LINE__).arg(path);
   QUrl url(path);
   QString file_path = url.path();
+
+#ifdef WIN32
+  file_path.remove(0,1);
+#endif
   QFile file(file_path);
   if(!file.open(QIODevice::WriteOnly)){
     qDebug()<<tr("[%1,%2]Fail to load the input file:%3").arg(__FILE__).arg(__LINE__).arg(file_path);
