@@ -80,17 +80,17 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
             qDebug()<<"D_dist:"<<D_dist;
             if (info[j].valid_target == false) {  //j是静止的蜘蛛
               float L = 0.15f;
-              float R = 0.175f;
+              float R = 0.12f;
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));//判断j是否位于i前面的圆内.
               if (r < R) {                                 //j在圆内，i转90°走4步.
                 out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
-                out_action[i].detla_step = 3;
+                out_action[i].detla_step = 2;
               }                                            //j不在圆内，按预定角度步数走.
             } else {                             //j是运动的蜘蛛
               float L = 0.15f;
-              float R = 0.175f;
+              float R = 0.12f;
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));

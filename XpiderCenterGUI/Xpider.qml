@@ -25,7 +25,7 @@ Item {
         id: xpider_id_txt_
         anchors.centerIn: parent
         text:dev_id
-        font.pixelSize: 12
+        font.pixelSize: 14
     }
 
     SpringAnimation{
