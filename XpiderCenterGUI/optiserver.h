@@ -29,6 +29,7 @@ public:
 
   static constexpr int XPIDER_WALK_SPEED=85;
   static constexpr int XPIDER_ROTATE_SPEED=100;
+  static constexpr float XPIDER_MIN_TARGET_DISTANCE=0.10;//in [meter], and use Manhatton distance
 
   enum SERVER_CMDID {
     SERVER_UPLAOD_REQ=0x9,

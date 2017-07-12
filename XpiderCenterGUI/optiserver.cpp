@@ -291,15 +291,20 @@ void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)
 
   for(int i=0;i<xpider_list.size();++i){
     xpider_opti_t *xpider = &xpider_list[i];
+    xpider->valid_target = false;
+    xpider->target_x = xpider->x;
+    xpider->target_y = xpider->y;
     if(ui_target_mask_.count(xpider->id)){
       QPointF pos = ui_target_mask_.value(xpider->id);
-      xpider->target_x = pos.x();
-      xpider->target_y = pos.y();
-      xpider->valid_target = true;
-    }else{
-      xpider->valid_target = false;
-      xpider->target_x = xpider->x;
-      xpider->target_y = xpider->y;
+      float m_dis = fabs(pos.x()-xpider->x)+fabs(pos.y()-xpider->y);
+      if(m_dis>XPIDER_MIN_TARGET_DISTANCE){
+        xpider->target_x = pos.x();
+        xpider->target_y = pos.y();
+        xpider->valid_target = true;
+      }else{
+        qDebug()<<tr("[%1,%2]target removed:%3").arg(__FILE__).arg(__LINE__).arg(xpider->id);
+        ui_target_mask_.remove(xpider->id);
+      }
     }
   }
 }
