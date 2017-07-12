@@ -27,7 +27,7 @@ public:
   static constexpr int RX_MAX_SIZE= 6000;
   static constexpr int INTERVAL_POST_TASK=2000;
 
-  static constexpr int XPIDER_WALK_SPEED=85;
+  static constexpr int XPIDER_WALK_SPEED=95;
   static constexpr int XPIDER_ROTATE_SPEED=100;
   static constexpr float XPIDER_MIN_TARGET_DISTANCE=0.10;//in [meter], and use Manhatton distance
 

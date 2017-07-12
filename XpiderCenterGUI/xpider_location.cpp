@@ -25,9 +25,9 @@ void XpiderLocation::GenerateInitLocation(float center_x, float center_y, uint8_
     }
   }
 
-  for(uint8_t ii=0; ii<rows*cols; ii++) {
-    qDebug() << "x: " << initialize_points_[ii].x << "y:" << initialize_points_[ii].y;
-  }
+//  for(uint8_t ii=0; ii<rows*cols; ii++) {
+//    qDebug() << "x: " << initialize_points_[ii].x << "y:" << initialize_points_[ii].y;
+//  }
 }
 
 

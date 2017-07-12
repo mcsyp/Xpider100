@@ -11,6 +11,8 @@ void TrajectoryThread::run(){
   if(xpider_queue_.size()==0){
     return;
   }
+
+
   //step1.call trajectory planner
   const int action_size = xpider_queue_.size();
   xpider_tp_t action_list[action_size];
@@ -18,11 +20,17 @@ void TrajectoryThread::run(){
   for(int i=0;i<xpider_queue_.size();++i){
     xpider_array[i] = xpider_queue_[i];
   }
-  int action_len = planner_.Plan(xpider_array,xpider_queue_.size(),action_list,action_size);
 
+  int action_len = planner_.Plan(xpider_array,xpider_queue_.size(),action_list,action_size);
+  #if 1
   //step2.call all xpiders to move
   for(int i=0;i<action_len;++i){
-    XpiderSocketThread * socket = XpiderSocketThread::socket_list_.at(action_list[i].id);
+    XpiderSocketThread * socket=NULL;
+    if(action_list[i].id>=0 && action_list[i].id< XpiderSocketThread::socket_list_.size()){
+      socket = XpiderSocketThread::socket_list_.at(action_list[i].id);
+    }else{
+      qDebug()<<tr("[%1,%2]fuck!!%3").arg(__FILE__).arg(__LINE__).arg(action_list[i].id);
+    }
     if(socket){
       QByteArray tx_pack;
       uint8_t* tx_buffer;
@@ -45,4 +53,5 @@ void TrajectoryThread::run(){
       socket->SendMessage(tx_pack);
     }
   }
+  #endif
 }

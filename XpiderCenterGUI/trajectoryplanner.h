@@ -7,14 +7,6 @@
 class TrajectoryPlanner {
 
 public:
-#if 1
-  typedef struct xpider_taget_point_s {   //输入，包括目的位置信息
-    uint32_t id;
-    float target_x;
-    float target_y;
-  }xpider_target_point_t;
-#endif
-  static constexpr int MAX_TARGET_SIZE=200;
   TrajectoryPlanner();
 
   // bool Reset(float width, float height, xpider_target_point_t target_list[],int target_len);
@@ -41,7 +33,6 @@ protected:
    *return
    * return true is reset success
    */
-  bool GenerateTargetList(xpider_opti_t info[], int info_len);
 
 private:
   int max_dis_id;
@@ -50,11 +41,7 @@ private:
   float min_dis;                           //每只之间的安全距离
   float min_target_dis;                    //近似到达目的地的距离
   int wait_max_number;                     //等待最大次数
-  xpider_target_point_t target_list_[MAX_TARGET_SIZE];
-  xpider_opti_t info_move[MAX_TARGET_SIZE];
-  int id_to_id[200] = {};
-  //int id_to_id[MAX_TARGET_SIZE];
-  int target_len_;
+
 };
 
 #endif // TRAJECTORYPLANNER_H
