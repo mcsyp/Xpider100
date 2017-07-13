@@ -47,12 +47,10 @@ public:
    */
   virtual bool Exec(QStringList argv)=0;
 
-  //this task happens in main frame thread
-  virtual bool SyncTask(){return false;}
-
-  virtual const QString & Example() const=0;
+  virtual const QString & Example() const {return example_;}
   virtual const QString & Key() const=0;//the command word
-public:
-  bool is_sync_;
+protected:
+  QString example_;
+
 };
 #endif // COMMANDTHREAD_H

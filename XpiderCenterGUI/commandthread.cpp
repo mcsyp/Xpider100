@@ -1,8 +1,11 @@
 #include "commandthread.h"
-#include "commandled.h"
 #include <QStringList>
 #include <QTextStream>
+
 #include "commanddelay.h"
+#include "commandaim.h"
+#include "commandled.h"
+#include "commanddegree.h"
 
 //QMap<int, CommandThread*> CommandThread::g_cmd_map = QMap<int, CommandThread*>();
 CommandThread::CommandThread(QObject *parent) : QThread(parent)
@@ -11,9 +14,18 @@ CommandThread::CommandThread(QObject *parent) : QThread(parent)
   //led
   CommandLed *cmdled=new CommandLed;
   cmd_map_.insert(cmdled->Key(),cmdled);
+
   //delay
   CommandDelay * cmd_delay = new CommandDelay;
   cmd_map_.insert(cmd_delay->Key(),cmd_delay);
+
+  //aim
+  CommandAim * cmd_aim = new CommandAim;
+  cmd_map_.insert(cmd_aim->Key(),cmd_aim);
+
+  //degree
+  CommandDegree* cmd_degree = new CommandDegree;
+  cmd_map_.insert(cmd_degree->Key(),cmd_degree);
 
   //clear the cmd string
   cmd_text_.clear();
@@ -33,7 +45,7 @@ CommandThread::~CommandThread()
 void CommandThread::StartCommandChain(QString &command_text){
   if(command_text.isEmpty())return;
   cmd_text_ =  command_text;
-  //qDebug()<<tr("[%1,%2] cmd:%3").arg(__FILE__).arg(__LINE__).arg(command_text);
+  qDebug()<<tr("[%1,%2] cmd:%3").arg(__FILE__).arg(__LINE__).arg(command_text);
   start();//run the thread
 }
 

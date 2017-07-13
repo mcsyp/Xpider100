@@ -17,8 +17,7 @@ ApplicationWindow {
 
     Playground {
      id:playground_
-     width:  parent.width
-     height: width*2/3;
+     anchors.fill: parent
     }
 
     Button{

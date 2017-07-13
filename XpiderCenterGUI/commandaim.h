@@ -19,12 +19,10 @@ public:
 
   virtual bool Exec(QStringList argv);
 
-  virtual const QString & Example() const{return example_;}
   virtual const QString & Key() const{return KEY;}
 protected:
   void SendCommand(int id, float delta_theta);
-protected:
-  QString example_;
+  float ComputeDelta(const xpider_opti_t& xpider ,float target_x,float target_y);
 };
 
 #endif // COMMANDAIM_H

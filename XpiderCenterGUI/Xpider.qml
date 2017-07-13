@@ -3,7 +3,7 @@ import QtQuick 2.0
 Item {
     id:xpider_item_
     property var dev_id:0xff
-    property var label_: "UNKNOWN"
+    property var label_: "UN"
     property var xpider_img_target_scale_:0.5
     property var selected_: false
     property var xpider_selected_scale_:0.35
@@ -23,10 +23,17 @@ Item {
     }
 
     Text{
-        id: xpider_id_txt_
+        id: xpider_labeltxt_
         anchors.centerIn: parent
         text:label_
         font.pixelSize: 14
+    }
+    Text{
+        id: xpider_id_txt_
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: xpider_labeltxt_.height+xpider_labeltxt_.y+1
+        text:"["+dev_id+"]"
+        font.pixelSize: 8
     }
 
     SpringAnimation{

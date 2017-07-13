@@ -9,8 +9,8 @@ Rectangle {
     property var cross_queue_ : new Array()
 
     property var max_xpider_num_:100
-    property var real_width_:3.0 //3 meter
-    property var real_height_:2.0 //2 meter
+    property var real_width_:3.5 //3 meter
+    property var real_height_:3.5 //2 meter
 
     property var reset_pos_:-500
 

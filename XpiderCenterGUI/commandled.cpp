@@ -5,8 +5,8 @@
 #include <xpider_ctl/xpider_protocol.h>
 #include <xpidersocketthread.h>
 
-const QString CommandLed::LED_KEY = QString("led");
-const QString CommandLed::LED_ALL = QString("all");
+const QString CommandLed::KEY = QString("led");
+const QString CommandLed::ALL = QString("all");
 const QString CommandLed::LED_L = QString("-l");
 const QString CommandLed::LED_R = QString("-r");
 const QString CommandLed::LED_BOTH = QString("-b");
@@ -22,17 +22,17 @@ CommandLed::CommandLed(QObject* parent):CommandParser(parent){
 
 bool CommandLed::Exec(QStringList argv){
   if(argv.length()==0 ||
-     argv.size()<LED_MIN_LEN ||
+     argv.size()<MIN_LEN ||
      argv[0].isEmpty()){
     return false;
   }
   //step1 check first key
-  if(argv[0]!=LED_KEY)return false;
+  if(argv[0]!=KEY)return false;
 
   //step2 check index
   int id=0;
   bool is_all_included=false;
-  if(argv[1]==LED_ALL){
+  if(argv[1]==ALL){
     is_all_included=true;
   }else{
     id = argv[1].toInt();
@@ -119,5 +119,3 @@ bool CommandLed::Exec(QStringList argv){
 
   return true;
 }
-
-const QString & CommandLed::Example() const{return example_;}

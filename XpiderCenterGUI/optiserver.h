@@ -56,6 +56,8 @@ public:
 
   Q_INVOKABLE bool csvLoadTargets(QString path);
   Q_INVOKABLE bool csvSaveTargets(QString path);
+
+  const TrajectoryThread* Planner(){return ptr_planner_thread_;}
 signals:
   void serviceInitializing();
 

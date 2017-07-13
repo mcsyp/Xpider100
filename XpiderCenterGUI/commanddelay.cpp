@@ -1,6 +1,6 @@
 #include "commanddelay.h"
 
-const QString CommandDelay::DELAY_KEY = QString("delay");
+const QString CommandDelay::KEY = QString("delay");
 CommandDelay::CommandDelay(QObject *parent) : CommandParser(parent)
 {
   QTextStream text;
@@ -11,12 +11,12 @@ CommandDelay::CommandDelay(QObject *parent) : CommandParser(parent)
 
 bool CommandDelay::Exec(QStringList argv){
   if(argv.length()==0 ||
-     argv.size()<DELAY_MIN_LEN ||
+     argv.size()<MIN_LEN ||
      argv[0].isEmpty()){
     return false;
   }
   //step1 check first key
-  if(argv[0]!=DELAY_KEY)return false;
+  if(argv[0]!=KEY)return false;
 
   //step2 get the msec
   int msec = argv[1].toInt();

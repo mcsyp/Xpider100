@@ -1,4 +1,4 @@
-#include "commandaim.h"
+#include "commanddegree.h"
 #include <QTextStream>
 #include <map>
 #include <xpider_ctl/xpider_info.h>
@@ -6,18 +6,18 @@
 #include <xpidersocketthread.h>
 #include <math.h>
 
-const QString CommandAim::KEY = QString("aim");
-const QString CommandAim::ALL = QString("all");
+const QString CommandDegree::KEY = QString("degree");
+const QString CommandDegree::ALL = QString("all");
 
-CommandAim::CommandAim(QObject* parent):CommandParser(parent){
+CommandDegree::CommandDegree(QObject* parent):CommandParser(parent){
   QTextStream text;
   text.setString(&example_);
-  text<<"aim [index] [x] [y]"<<endl;
-  text<<"eg: aim all 0.12 -1.2"<<endl;
-  text<<"eg: aim 10 0.2 0.23"<<endl;
+  text<<"degree [index] [angle]"<<endl;
+  text<<"eg: degree all 10"<<endl;
+  text<<"eg: aim 10 180"<<endl;
 }
 
-bool CommandAim::Exec(QStringList argv){
+bool CommandDegree::Exec(QStringList argv){
   if(argv.length()==0 ||
      argv.size()<MIN_LEN ||
      argv[0].isEmpty()){
@@ -35,14 +35,12 @@ bool CommandAim::Exec(QStringList argv){
     id = argv[1].toInt();
   }
   //step3. check target
-  float target_x = argv[2].toFloat();
-  float target_y = argv[3].toFloat();
+  float target_theta = fmod(argv[2].toFloat(),360.0f)*M_PI/180.0f;
 
-  qDebug()<<tr("[%1,%2] executing aim %3 %4 %5")
+  qDebug()<<tr("[%1,%2] executing degree %3 %4 %5")
             .arg(__FILE__).arg(__LINE__)
             .arg(argv[1])
-            .arg(target_x)
-            .arg(target_y);
+            .arg(target_theta);
 
   //step4. duplicate xpider_queue
   std::vector<xpider_opti_t> local_xpider_queue;
@@ -62,7 +60,7 @@ bool CommandAim::Exec(QStringList argv){
   for(int i=0;i<local_xpider_queue.size();++i){
     xpider_opti_t x = local_xpider_queue[i];
     if(is_all_included || x.id == id){
-      float delta = ComputeDelta(x,target_x,target_y);
+      float delta = ComputeDelta(x,target_theta);
       SendCommand(x.id,delta);
       //qDebug()<<tr("[%1,%2] sending %3 to xpider_%4").arg(__FILE__).arg(__LINE__).arg(delta).arg(x.id);
     }
@@ -71,7 +69,7 @@ bool CommandAim::Exec(QStringList argv){
   return true;
 }
 
-void CommandAim::SendCommand(int id, float delta_theta)
+void CommandDegree::SendCommand(int id, float delta_theta)
 {
   if(id<0 && id>=XpiderSocketThread::socket_list_.size()){
     return;
@@ -99,15 +97,10 @@ void CommandAim::SendCommand(int id, float delta_theta)
   }
 }
 
-float CommandAim::ComputeDelta(const xpider_opti_t& xpider, float target_x, float target_y)
+float CommandDegree::ComputeDelta(const xpider_opti_t& xpider, float heading_theta)
 {
-  float distance = sqrt(pow((target_x-xpider.x),2)+pow((target_y-xpider.x),2));
-  float A1 = acos((target_x-xpider.x)/distance);
-  if (target_y-xpider.y<0) {
-    A1 = 2.0f*M_PI-A1;                             //A1~(0,2M_PI)
-  }
   float delta_rad1, delta_rad2;
-  delta_rad1 = xpider.theta-A1;// - info[i].theta;
+  delta_rad1 = xpider.theta-heading_theta;// - info[i].theta;
   delta_rad2 = delta_rad1<0 ? M_PI*2.0f+delta_rad1 : delta_rad1-M_PI*2.0f;
   delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
   return delta_rad1;
