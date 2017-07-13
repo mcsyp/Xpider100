@@ -5,8 +5,8 @@ TrajectoryPlanner::TrajectoryPlanner()
   max_dis_id = 0;
   max_dis_x = 0;
   max_dis_y = 0;
-  min_dis = 0.22;             //20cm
-  min_target_dis = 0.15;      //6cm
+  min_dis = 0.26;             //20cm
+  min_target_dis = 0.8;      //6cm
   wait_max_number = 2;
 }
 
@@ -59,14 +59,16 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
       delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
       out_action[i].id = info[i].id;
       out_action[i].delta_theta = delta_rad1;
-      out_action[i].detla_step = info_target_dis<0.10 ? 2 : 4;
-      // out_action[i].detla_step = 4;
+      out_action[i].detla_step = 2;
     }
   }
 
   //step3:路径规划.
   for (int i = 0; i<info_len; i++) {
     if (info[i].valid_target == true) {          //i为需要移动的
+      qDebug()<<"info["<<i<<"]:      ID:"<<info[i].id;
+      qDebug()<<"info["<<i<<"]:       x:"<<info[i].x;
+      qDebug()<<"info["<<i<<"]:       x:"<<info[i].y;
       for (int j=0; j<info_len; j++) {
         if (info[i].id != info[j].id) {
           float D_dist = sqrt(pow((info[i].x-info[j].x),2)+pow((info[i].y-info[j].y),2));
@@ -80,25 +82,51 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
             qDebug()<<"D_dist:"<<D_dist;
             if (info[j].valid_target == false) {  //j是静止的蜘蛛
               float L = 0.15f;
-              float R = 0.12f;
+              float R = 0.09f;
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));//判断j是否位于i前面的圆内.
               if (r < R) {                                 //j在圆内，i转90°走4步.
                 out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
                 out_action[i].detla_step = 2;
-              }                                            //j不在圆内，按预定角度步数走.
+              }                                  //j不在圆内，按预定角度步数走.
             } else {                             //j是运动的蜘蛛
               float L = 0.15f;
-              float R = 0.12f;
+              float R = 0.09f;
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
               if (r < R) {
                 if (priority[i] < priority[j]) {
-                  out_action[j].detla_step = 0;
+                  out_action[j].detla_step = 0;    //此时i先走，i应检测前方
+                  float L = 0.15f;
+                  float R = 0.09f;
+                  float x1 = info[i].x + L*cos(A[i]);
+                  float y1 = info[i].y + L*sin(A[i]);
+                  for (int k = 0; k<info_len; k++) {
+                    float r = sqrt(pow(info[k].x - x1, 2) + pow(info[k].y - y1, 2));
+                    if (r < R) {
+                      qDebug()<<"r--i:"<<r;
+                      out_action[i].detla_step = 0;
+                      out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
+                      A[i] = A[i] + M_PI/2;
+                    }
+                  }
               } else {
-                  out_action[i].detla_step = 0;
+                  out_action[i].detla_step = 0;    //此时j先走，j应检测前方
+                  float L = 0.15f;
+                  float R = 0.09f;
+                  float x1 = info[j].x + L*cos(A[j]);
+                  float y1 = info[j].y + L*sin(A[j]);
+                  for (int k = 0; k<info_len; k++) {
+                    float r = sqrt(pow(info[k].x - x1, 2) + pow(info[k].y - y1, 2));
+                    if (r < R) {
+                      qDebug()<<"r--j:"<<r;
+                      out_action[j].detla_step = 0;
+                      out_action[j].delta_theta = out_action[i].delta_theta + M_PI/2;
+                      A[j] = A[j] + M_PI/2;
+                    }
+                  }
                 }
               }
             }
@@ -208,9 +236,10 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
 //  }
 
   for (int i=0; i<info_len; i++){
-//    qDebug()<<"target_list_["<<i<<"]:      ID:"<<target_list_[i].id;
-//    qDebug()<<"target_list_["<<i<<"]:target_x:"<<target_list_[i].target_x;
-//    qDebug()<<"target_list_["<<i<<"]:target_y:"<<target_list_[i].target_y;
+//    qDebug()<<"info["<<i<<"]:      ID:"<<info[i].id;
+//    qDebug()<<"info["<<i<<"]:       x:"<<info[i].x;
+//    qDebug()<<"info["<<i<<"]:       x:"<<info[i].y;
+
     qDebug()<<"out_action["<<i<<"]:         ID:"<<out_action[i].id;
     qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
     qDebug()<<"out_action["<<i<<"]:          θ:"<<(out_action[i].delta_theta)*(180/M_PI);
