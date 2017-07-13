@@ -114,8 +114,12 @@ Rectangle {
                 var selected = (i===min_index && !xpider_queue_[i].selected_);
                 xpider_queue_[i].setSelected(selected);
             }
-            if(xpider_queue_[min_index].selected_) return min_index;
-            else return -2;
+            if(xpider_queue_[min_index].selected_) {
+                return min_index;
+            }else{//cancel selection
+                opti_server_.removeTarget(xpider_queue_[min_index].dev_id);
+                return -2;
+            }
         }
         return -1;
     }

@@ -26,7 +26,7 @@ bool CommandDegree::Exec(QStringList argv){
   //step1 check first key
   if(argv[0]!=KEY)return false;
 
-  //step2 check index
+  //step2 check index ?.,m b
   int id=0;
   bool is_all_included=false;
   if(argv[1]==ALL){
