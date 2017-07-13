@@ -41,6 +41,7 @@ private:
   float min_dis;                           //每只之间的安全距离
   float min_target_dis;                    //近似到达目的地的距离
   int wait_max_number;                     //等待最大次数
+  float wait_number[200];
 
 };
 

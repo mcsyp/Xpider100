@@ -96,7 +96,7 @@ int OptiService::StartService(){
   //init xpider location (the land mark loacation )
   do{
     ptr_location_ = new XpiderLocation();
-    ptr_location_->GenerateInitLocation(0,-1,4,12);
+    ptr_location_->GenerateInitLocation(0,-1.0, 4, 12);
     XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
 
     int counter=0;
