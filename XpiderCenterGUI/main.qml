@@ -73,7 +73,7 @@ ApplicationWindow {
         Text{
             id:xpider_number_txt_
             verticalAlignment: Text.AlignVCenter
-            text: "< "+xpider_number_rect_.xpider_number_+" online"
+            text: "< "+xpider_number_rect_.xpider_number_+"> online"
             font.pixelSize: 15
             color:"White"
         }
