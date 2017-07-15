@@ -66,6 +66,9 @@ signals:
 
   void landmarkListUpdate(QString str_json);
   void xpiderListUpdate(QString str_json);
+
+  void optitrackConnected(bool connected);
+  void xpiderAliveUpdate(int number);
 protected:
   static OptiService* ptr_instance;
 protected slots:

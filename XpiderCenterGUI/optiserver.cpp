@@ -146,6 +146,7 @@ void OptiService::onNewConnection(){
   connect(client_,SIGNAL(readyRead()),this, SLOT(onClientReadyRead()));
   connect(client_,SIGNAL(disconnected()),this,SLOT(onClientDisconnected()));
   client_->write("Hey bro, opti server connected.\n");
+  emit optitrackConnected(true);
 }
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
@@ -180,6 +181,11 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
     const int id_size = XpiderSocketThread::socket_list_.size();
     uint32_t id_array[id_size];
     int id_len=AvailableXpiderSocketID(id_array,id_size);
+    static int last_id_len=0;
+    if(id_len!=last_id_len){
+      emit xpiderAliveUpdate(id_len);
+      last_id_len = id_len;
+    }
 
     QMap<QString, xpider_opti_t> temp_raw_map;
     //step3.call tracing processor
@@ -306,6 +312,7 @@ QString OptiService::PointToString(const QPointF &point){
 
 void OptiService::onClientDisconnected(){
   if(client_)client_=NULL;
+  emit optitrackConnected(false);
 }
 
 void OptiService::onClientReadyRead(){

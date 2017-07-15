@@ -6,7 +6,7 @@ import QtQuick.Dialogs 1.2
 ApplicationWindow {
     id:main_window_
     visible: true
-    width:1480
+    width:1560
     height:900
     minimumWidth: width
     minimumHeight: height
@@ -16,18 +16,85 @@ ApplicationWindow {
     property var command_list_:new Array()
 
     Playground {
-     id:playground_
-     anchors.fill: parent
+        id:playground_
+        anchors.fill: parent
+    }
+
+    Rectangle{
+        id: connection_state_rect_
+        opacity: 0.7
+        width:connection_state_txt_.contentWidth+10
+        height:connection_state_txt_.contentHeight
+        x:0
+        y:main_window_.height/6
+        property bool is_connected: false
+        color: (is_connected)?"Orange":"White"
+
+        Text{
+            id: connection_state_txt_
+            anchors.fill: parent
+            font.pixelSize: 15
+            verticalAlignment: Text.AlignVCenter
+            color:(connection_state_rect_.is_connected)?"White":"Black"
+            font.bold: true
+            text: (connection_state_rect_.is_connected)?"Optitrack online":"Optitrack offline";
+        }
+        SpringAnimation{
+            id:animate_scale
+            target:connection_state_rect_
+            property: "x"
+            spring: 3.0
+            damping: 0.2
+            epsilon: 0.2
+            from:-connection_state_rect_.width-50
+            to:0
+            duration:45
+        }
+        Connections{
+            target:opti_server_
+            onOptitrackConnected:{
+                connection_state_rect_.is_connected = connected;
+                animate_scale.running=true
+            }
+        }
+    }
+
+
+    Rectangle{
+        id: xpider_number_rect_
+        color: "Black"
+        opacity: 0.60
+        width:xpider_number_txt_.contentWidth+10
+        height: xpider_number_txt_.contentHeight
+        x:0
+        y:connection_state_rect_.y+connection_state_rect_.height+3
+        property int xpider_number_: 0
+        visible:xpider_number_>0
+        Text{
+            id:xpider_number_txt_
+            verticalAlignment: Text.AlignVCenter
+            text: "< "+xpider_number_rect_.xpider_number_+" > online"
+            font.pixelSize: 15
+            color:"White"
+        }
+
+        Connections{
+            target:opti_server_
+            onXpiderAliveUpdate:{
+                xpider_number_rect_.xpider_number_=number;
+            }
+        }
     }
 
     Button{
         id:start_btn_
         property bool is_planner_running:false
         text:(is_planner_running)?"Stop":"Start"
-        width:200
+        width:150
         x:main_window_.width-start_btn_.width
         y:main_window_.height/3
         z:5
+        font.bold: true
         opacity: 0.8
         onClicked: {
             if(is_planner_running){

@@ -167,7 +167,6 @@ Rectangle {
         }
         onLandmarkListUpdate:{
             var mark_list = JSON.parse(str_json);
-            console.log("landmarks:",mark_list.length);
             for(var i=0;i<cross_queue_.length;++i){
                 if(i<mark_list.length){
                     var mark= mark_list[i];
@@ -188,7 +187,7 @@ Rectangle {
             createCross(max_xpider_num_)
             console.log("xpdier queue intialized:",xpider_queue_.length);
             console.log("target queue intialized:",target_queue_.length);
-            console.log("cross queue intialized:",cross_queue_.length);
+            console.log("landmark queue intialized:",cross_queue_.length);
         }
     }
 }
