@@ -47,7 +47,10 @@ bool CommandAim::Exec(QStringList argv){
   //step4. duplicate xpider_queue
   std::vector<xpider_opti_t> local_xpider_queue;
   const TrajectoryThread* ptr_planner = OptiService::Singleton()->Planner();
-  if(ptr_planner==NULL)return false;
+  if(ptr_planner==NULL){
+    qDebug()<<tr("[%1,%2] No planner thread found").arg(__FILE__).arg(__LINE__);
+    return false;
+  }
   for(int i=0;i<10;++i){
     //retry 10 times
     local_xpider_queue =  ptr_planner->xpider_queue_;
@@ -56,8 +59,10 @@ bool CommandAim::Exec(QStringList argv){
     }
     QThread::msleep(5);
   }
-  if(local_xpider_queue.size()==0)return false;
-
+  if(local_xpider_queue.size()==0){
+    qDebug()<<tr("[%1,%2] No xpider found in the list.").arg(__FILE__).arg(__LINE__);
+    return false;
+  }
   //step4. compute target
   for(int i=0;i<local_xpider_queue.size();++i){
     xpider_opti_t x = local_xpider_queue[i];
@@ -67,6 +72,7 @@ bool CommandAim::Exec(QStringList argv){
       //qDebug()<<tr("[%1,%2] sending %3 to xpider_%4").arg(__FILE__).arg(__LINE__).arg(delta).arg(x.id);
     }
   }
+  qDebug()<<tr("[%1,%2]aim command successfully done").arg(__FILE__).arg(__LINE__);
 
   return true;
 }

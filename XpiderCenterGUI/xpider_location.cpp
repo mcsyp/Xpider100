@@ -27,9 +27,26 @@ void XpiderLocation::GenerateInitLocation(float center_x, float center_y, uint8_
 
 //  for(uint8_t ii=0; ii<rows*cols; ii++) {
 //    qDebug() << "x: " << initialize_points_[ii].x << "y:" << initialize_points_[ii].y;
-//  }
+  //  }
+  this->center_x_ = center_x;
+  this->center_y_ = center_y;
+  this->rows_ = rows;
+  this->cols_ = cols;
 }
 
+void XpiderLocation::UpdateLandmark(int index, float x, float y){
+  if(index>=0 && index<initialize_points_.size()){
+    initialize_points_[index].x = x;
+    initialize_points_[index].y = y;
+  }
+}
+
+void XpiderLocation::GetInitialMatrixInfo(float &center_x, float &center_y, uint8_t &rows, uint8_t &cols){
+  center_x = this->center_x_;
+  center_y = this->center_y_;
+  rows = this->rows_;
+  cols = this->cols_;
+}
 
 bool XpiderLocation::GetRobotLocation(std::vector<xpider_opti_t> & raw_info, uint32_t id_list[],
                                       uint32_t id_len, std::vector<xpider_opti_t> &out_list) {

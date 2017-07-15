@@ -42,6 +42,8 @@ public:
 
   //start the server
   int StartService();
+  void UpdateJSONEncodeLandmarks();
+  void UpdateJSONEncodeXpdiers();
 
   //push and remove target
   Q_INVOKABLE void pushTarget(unsigned int id, float x, float y);
@@ -57,6 +59,7 @@ public:
   Q_INVOKABLE bool csvLoadTargets(QString path);
   Q_INVOKABLE bool csvSaveTargets(QString path);
 
+  Q_INVOKABLE void resetLandmarks();
   const TrajectoryThread* Planner(){return ptr_planner_thread_;}
 signals:
   void serviceInitializing();
@@ -101,6 +104,8 @@ private:
   QTimer timer_retry_;
   int last_trigger_;
 
+
+  QStringList xpider_host_list_;
   //xpider location service
   XpiderLocation *ptr_location_;
 

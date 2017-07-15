@@ -36,6 +36,10 @@ private:
   std::map<int, xpider_opti_t> *robot_data_;
   std::vector<std::vector<Point> > robot_init_location;
 
+  float center_x_;
+  float center_y_;
+  uint8_t rows_;
+  uint8_t cols_;
 public:
   explicit XpiderLocation();
 
@@ -43,6 +47,10 @@ public:
                         uint32_t id_len, std::vector<xpider_opti_t> &out_list);
   void GenerateInitLocation(float center_x, float center_y, uint8_t rows, uint8_t cols);
   LandmarkList & Landmarks(){return initialize_points_;}
+  void UpdateLandmark(int index,float x, float y);
+
+  void GetInitialMatrixInfo(float &center_x,float & center_y,uint8_t &rows,uint8_t&cols);
+
 };
 
 #endif // XPIDER_LOCATION_H

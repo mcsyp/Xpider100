@@ -6,7 +6,7 @@ import QtQuick.Dialogs 1.2
 ApplicationWindow {
     id:main_window_
     visible: true
-    width:1440
+    width:1480
     height:900
     minimumWidth: width
     minimumHeight: height
@@ -24,8 +24,11 @@ ApplicationWindow {
         id:start_btn_
         property bool is_planner_running:false
         text:(is_planner_running)?"Stop":"Start"
-        x:main_window_.width/2-start_btn_.width-2;
-        y:main_window_.height-start_btn_.height-5
+        width:200
+        x:main_window_.width-start_btn_.width
+        y:main_window_.height/3
+        z:5
+        opacity: 0.8
         onClicked: {
             if(is_planner_running){
                 playground_.resetAllTargets();
@@ -37,8 +40,11 @@ ApplicationWindow {
     Button{
         id:cmd_btn_
         text:"Command"
-        x:2+main_window_.width/2
-        y:main_window_.height-cmd_btn_.height-5
+        width:150
+        x:main_window_.width-cmd_btn_.width
+        y:start_btn_.y+start_btn_.height+5
+        z:5
+        opacity: 0.8
         onClicked: {
             var panel = availableCommandPanel()
             panel.visible=true;
@@ -47,11 +53,28 @@ ApplicationWindow {
         }
     }
 
+    Button {
+        id:reset_landmarks_btn_
+        width:150
+        text: "Reset Landmarks"
+        x:main_window_.width-reset_landmarks_btn_.width
+        y:cmd_btn_.y+cmd_btn_.height+5
+        z:5
+        opacity: 0.8
+        onClicked: {
+            opti_server_.resetLandmarks();
+            console.log("reset all landmarks")
+        }
+    }
+
     Button{
         id:save_btn_
         text:"Save Targets"
-        x:cmd_btn_.x+cmd_btn_.width+5
-        y:main_window_.height-cmd_btn_.height-5
+        width:150
+        x:main_window_.width-save_btn_.width
+        y:reset_landmarks_btn_.y+reset_landmarks_btn_.height+5
+        z:5
+        opacity: 0.8
         onClicked: {
             target_record_dialog_.is_saving_=true;
             target_record_dialog_.title="Saving targets to .CSV"
@@ -64,8 +87,11 @@ ApplicationWindow {
     Button{
         id:load_btn_
         text:"Load Targets"
-        x:save_btn_.x+save_btn_.width+5
-        y:main_window_.height-cmd_btn_.height-5
+        width:150
+        x:main_window_.width-load_btn_.width
+        y:save_btn_.y+save_btn_.height+5
+        z:5
+        opacity: 0.8
         onClicked: {
             target_record_dialog_.is_saving_=false;
             target_record_dialog_.title="Loading .CSV target records."

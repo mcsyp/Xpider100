@@ -25,7 +25,12 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
 
   time_.start();
 
-  ptr_location_=NULL;
+  //init location planner
+  ptr_location_ = new XpiderLocation();
+  //init command framework background thread
+  ptr_cmd_thread_ = new CommandThread;
+  //init planner thread
+  ptr_planner_thread_ = new TrajectoryThread;
 }
 
 OptiService *OptiService::Singleton(){
@@ -65,8 +70,8 @@ int OptiService::StartService(){
   this->listen(QHostAddress::Any,SERVER_PORT);
   qDebug()<<tr("[%1,%2]Opti service started on %3").arg(__FILE__).arg(__LINE__).arg(SERVER_PORT);
 
-  QStringList host_list;
   do{
+    xpider_host_list_.clear();
     QFile ip_file(CONFIG_XPDIER_IP_TXT);
     if(!ip_file.open(QIODevice::ReadOnly)){
       qDebug()<<tr("[%1,%2]Fail to load the %3").arg(__FILE__).arg(__LINE__).arg(CONFIG_XPDIER_IP_TXT);
@@ -77,16 +82,16 @@ int OptiService::StartService(){
       QString str_ip = stream.readLine();
       if(str_ip.startsWith(";"))continue;
       if(str_ip.contains('.')){
-        host_list.append(str_ip);
+        xpider_host_list_.append(str_ip);
       }
     }
     ip_file.close();
 
     const int host_port=80;
-    for(int i=0;i<host_list.size();++i){
+    for(int i=0;i<xpider_host_list_.size();++i){
       XpiderSocketThread * socket = new XpiderSocketThread();
       if(socket){
-        QString name = host_list[i];
+        QString name = xpider_host_list_[i];
         socket->StartConnection(name,host_port);
         connect(&timer_retry_,SIGNAL(timeout()),socket,SLOT(onTimeoutRetry()));
       }
@@ -95,44 +100,41 @@ int OptiService::StartService(){
 
   //init xpider location (the land mark loacation )
   do{
-    ptr_location_ = new XpiderLocation();
     ptr_location_->GenerateInitLocation(0,-1,4,12);
-    XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
-
-    int counter=0;
-    QJsonDocument jdoc;
-    QJsonArray jarray;
-    for(auto iter=list.begin();iter!=list.end();++iter){
-      XpiderLocation::Point point = *iter;
-      QJsonObject jobj;
-
-      if(counter<host_list.size()){
-        QString str_id = QString(host_list[counter]);
-        jobj["id"]= str_id.split('.').last();
-      }else{
-        jobj["id"]= QString("[%1]").arg(counter);
-      }
-      jobj["x"] = point.x;
-      jobj["y"] = point.y;
-      jarray.append(jobj);
-      ++counter;
-    }
-    jdoc.setArray(jarray);
-    emit landmarkListUpdate(QString(jdoc.toJson()));
+    UpdateJSONEncodeLandmarks();
   }while(0);
 
   //init universal retry timer
   timer_retry_.start(XpiderSocketThread::INTERVAL_RETRY);
 
-  //init command framework background thread
-  ptr_cmd_thread_ = new CommandThread;
-
-  //init planner thread
-  ptr_planner_thread_ = new TrajectoryThread;
-
   //clear the target mask
   ui_target_mask_.clear();
   return this->serverPort();
+}
+
+void OptiService::UpdateJSONEncodeLandmarks(){
+  XpiderLocation::LandmarkList &list = ptr_location_->Landmarks();
+
+  int counter=0;
+  QJsonDocument jdoc;
+  QJsonArray jarray;
+  for(auto iter=list.begin();iter!=list.end();++iter){
+    XpiderLocation::Point point = *iter;
+    QJsonObject jobj;
+
+    if(counter<xpider_host_list_.size()){
+      QString str_id = QString(xpider_host_list_[counter]);
+      jobj["id"]= str_id.split('.').last();
+    }else{
+      jobj["id"]= QString("[%1]").arg(counter);
+    }
+    jobj["x"] = point.x;
+    jobj["y"] = point.y;
+    jarray.append(jobj);
+    ++counter;
+  }
+  jdoc.setArray(jarray);
+  emit landmarkListUpdate(QString(jdoc.toJson()));
 }
 
 void OptiService::onNewConnection(){
@@ -209,7 +211,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         jobj["theta"]= raw.theta;
         jobj["x"] = raw.x;
         jobj["y"] = raw.y;
-        jobj["label"] = "UNKNOWN";
+        jobj["label"] = "UN";
         //update ID
         //HASH MAP checking is MUCH MUCH faster!!
         QString str_key = PointToString(QPointF(raw.x,raw.y));
@@ -217,8 +219,13 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
           xpider_opti_t value = temp_raw_map.value(str_key);
           jobj["id"]=static_cast<int>(value.id);
           if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
+             //if this xpider is a socket connected xpider!!!!
+             //its label has a different name
              QString host_name = XpiderSocketThread::socket_list_[static_cast<int>(value.id)]->Hostname();
              jobj["label"]=host_name.split(".").last();
+
+             //update its landmark positiond
+             ptr_location_->UpdateLandmark(value.id,value.x,value.y);
           }
           jobj["target_x"] = value.target_x;
           jobj["target_y"] = value.target_y;
@@ -232,6 +239,9 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         jarray.push_back(jobj);
       }
       jdoc.setArray(jarray);
+
+      //update xpiders landmarks
+      UpdateJSONEncodeLandmarks();
       emit xpiderListUpdate(QString(jdoc.toJson()));
     }while(0);
 
@@ -392,6 +402,13 @@ bool OptiService::csvSaveTargets(QString path)
   }
   file.close();
   return true;
+}
+
+void OptiService::resetLandmarks(){
+  float cx,cy;
+  uint8_t rows,cols;
+  ptr_location_->GetInitialMatrixInfo(cx,cy,rows,cols);
+  ptr_location_->GenerateInitLocation(cx,cy,rows,cols);
 }
 
 
