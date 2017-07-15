@@ -40,11 +40,17 @@ void TrajectoryThread::run(){
       protocol.Initialize(&info);
 
       //step1.set target angle & transform to tx buffer
-      info.rotate_speed = OptiService::XPIDER_ROTATE_SPEED;
-      info.rotate_rad = action_list[i].delta_theta;
-      info.walk_speed = OptiService::XPIDER_WALK_SPEED;
-      info.walk_step = action_list[i].detla_step;
-      protocol.GetBuffer(protocol.kAutoMove, &tx_buffer, &tx_length);
+      if(action_list[i].detla_step == 0) {
+        info.rotate = 0;
+        info.move = 0;
+        protocol.GetBuffer(protocol.kMove, &tx_buffer, &tx_length);
+      } else {
+        info.rotate_speed = OptiService::XPIDER_ROTATE_SPEED;
+        info.rotate_rad = action_list[i].delta_theta;
+        info.walk_speed = OptiService::XPIDER_WALK_SPEED;
+        info.walk_step = action_list[i].detla_step;
+        protocol.GetBuffer(protocol.kAutoMove, &tx_buffer, &tx_length);
+      }
 
       //step2. set tx_pack
       tx_pack.append((char*)tx_buffer,tx_length);
