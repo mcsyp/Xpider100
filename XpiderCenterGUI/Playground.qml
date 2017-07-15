@@ -43,7 +43,7 @@ Rectangle {
             }
         }
     }
-    function createCross(num){
+    function createLandmarks(num){
         var component = Qt.createComponent("Cross.qml");
         if(component.status===Component.Ready){
             for(var i=0;i<num;++i){
@@ -184,7 +184,7 @@ Rectangle {
         onServiceInitializing:{
             createXpider(max_xpider_num_)
             createTarget(max_xpider_num_)
-            createCross(max_xpider_num_)
+            createLandmarks(max_xpider_num_)
             console.log("xpdier queue intialized:",xpider_queue_.length);
             console.log("target queue intialized:",target_queue_.length);
             console.log("landmark queue intialized:",cross_queue_.length);
