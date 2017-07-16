@@ -64,8 +64,8 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
   }
 
   //step3:路径规划.
-  float L = 0.15f;
-  float R = 0.09f;
+  float L = 0.18f;
+  float R = 0.1f;
   for (int i = 0; i<info_len; i++) {
     if (info[i].valid_target == true) {          //i为需要移动的.
       for (int j=0; j<info_len; j++) {
@@ -103,6 +103,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
               if (r < R) {
                 if (priority[i] < priority[j]) {
                   out_action[j].detla_step = 0;    //此时i先走，i应检测前方.
+                  qDebug()<<"_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_";
                   wait_number[j]++;                //j等待计数器加一.
                   float x1 = info[i].x + L*cos(A[i]);
                   float y1 = info[i].y + L*sin(A[i]);
@@ -114,8 +115,9 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
                       A[j] = A[j] + M_PI/2;
                     }
                   }
-              } else {
+                } else {
                   out_action[i].detla_step = 0;    //此时j先走，j应检测前方.
+                  qDebug()<<"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=";
                   wait_number[i]++;                //i等待计数器加一.
                   float x1 = info[j].x + L*cos(A[j]);
                   float y1 = info[j].y + L*sin(A[j]);
@@ -138,7 +140,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
 
   //step4:长时间等待，触发此处
   for (int i=0; i<info_len; i++) {
-    if (wait_number[i] > 6) {
+    if (wait_number[i] > 3) {
       qDebug()<<"+++++++++++++++++++++++++++++++";
       wait_number[i] = 0;
       out_action[i].delta_theta = A[i] + M_PI/2;   //
@@ -157,70 +159,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
     }
   }
 
-
-            /*
-          if (priority[info_move[i].id] < priority[info_move[j].id]) {
-            out_action[i].detla_step = 0;      //此处可解决行进过程中的碰撞问题
-            qDebug()<<"+++++++++++++++++++++++++++++++++++++++";
-            break;
-          } else {                             //此处解决行进与静止的碰撞问题
-            out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
-            float L = 0.15f;
-            float R = 0.075f;
-            float x1 = info_move[i].x + L*cos(out_action[i].delta_theta);
-            float y1 = info_move[i].y + L*sin(out_action[i].delta_theta);
-            for (int k=0; k<info_len; k++) {
-              if (k!=i) {
-                float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
-                if (r < R) {
-                  out_action[i].detla_step = 0;
-                  break;
-                } else {
-                  out_action[i].detla_step = 3;
-                }
-              }
-            }
-            qDebug()<<"----------------------------------------";
-            break;
-          }
-        }
-      }
-    }
-  }*/
-
-  //step5:若长时间等待，转角90°
-
-//  float L = 0.15f;
-//  float R = 0.075f;
-//  for (int i=0; i<target_len_; i++) {
-//    if (id_to_id[out_action[i].id]>5) {
-//      id_to_id[out_action[i].id] = 0;
-//      A2[i] = A2[i] + M_PI/2.0f;
-
-//      float x1 =info_move[i].x + L*cos(A2[i]);
-//      float y1 =info_move[i].y + L*sin(A2[i]);
-
-//      qDebug()<<"x1:"<<x1;
-//      qDebug()<<"y1:"<<y1;
-//      qDebug()<<"ID:"<<info_move[i].id;
-
-//      //此处判断转角后，前方有无障碍物
-//      for (int j=0; j<info_len; j++) {
-//        float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
-//        qDebug()<<"r:"<<r;
-//        if (r < R) {
-//          out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
-//          out_action[i].detla_step = 0;
-//          break;
-//        } else {
-//          out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
-//          out_action[i].detla_step = 3;
-//          break;
-//        }
-//      }
-//    }
-//  }
-
+  //打印输出结果
   for (int i=0; i<info_len; i++){
     qDebug()<<"out_action["<<i<<"]:         ID:"<<out_action[i].id;
     qDebug()<<"out_action["<<i<<"]:delta_theta:"<<out_action[i].delta_theta;
