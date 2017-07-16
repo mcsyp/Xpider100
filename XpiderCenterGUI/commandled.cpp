@@ -67,54 +67,41 @@ bool CommandLed::Exec(QStringList argv){
       right[2] = argv[offset_right+3].toInt();
     }
   }
-  if(argv.contains(LED_RANDOM)){
-    static unsigned int rand_counter=0;
-    ++rand_counter;
-    srand(rand_counter);
-    for(int i=0;i<3;++i){
-      uint8_t color = rand()%255;
-      left[i] = color;
-      right[i] = color;
-    }
-  }
 
   //step4. executate
   do{
-    QByteArray tx_pack;
-    uint8_t* tx_buffer;
-    uint16_t tx_length;
-    XpiderInfo info;
-    XpiderProtocol  protocol;
-    protocol.Initialize(&info);
-
-    //step1.set target angle & transform to tx buffer
-    info.left_led_rgb[0]=left[0];
-    info.left_led_rgb[1]=left[1];
-    info.left_led_rgb[2]=left[2];
-    info.right_led_rgb[0]=right[0];
-    info.right_led_rgb[1]=right[1];
-    info.right_led_rgb[2]=right[2];
-
-    qDebug()<<tr("[%1,%2] LED set: left(%3,%4,%5),right(%6,%7,%8)")
-              .arg(__FILE__).arg(__LINE__)
-              .arg(left[0]).arg(left[1]).arg(left[2])
-              .arg(right[0]).arg(right[1]).arg(right[2]);
-
-    protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
-    tx_pack.append((char*)tx_buffer,tx_length);
-
-    if(is_all_included){
-      for(auto iter=XpiderSocketThread::socket_list_.begin();
-          iter!=XpiderSocketThread::socket_list_.end();
-          ++iter){
-        XpiderSocketThread * x = *iter;
-        if(x){
-          x->SendMessage(tx_pack);
+    for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
+      if(is_all_included || i==id){
+        XpiderSocketThread* x = XpiderSocketThread::socket_list_.at(i);
+        if(argv.contains(LED_RANDOM)){
+          static unsigned int rand_counter=0;
+          ++rand_counter;
+          srand(rand_counter);
+          for(int i=0;i<3;++i){
+            uint8_t color = rand()%255;
+            left[i] = color;
+            right[i] = color;
+          }
         }
-      }
-    }else{
-      XpiderSocketThread *x = XpiderSocketThread::socket_list_.at(id);
-      if(x){
+        QByteArray tx_pack;
+        uint8_t* tx_buffer;
+        uint16_t tx_length;
+        XpiderInfo info;
+        XpiderProtocol  protocol;
+        protocol.Initialize(&info);
+
+        //step1.set target angle & transform to tx buffer
+        info.left_led_rgb[0]=left[0];
+        info.left_led_rgb[1]=left[1];
+        info.left_led_rgb[2]=left[2];
+        info.right_led_rgb[0]=right[0];
+        info.right_led_rgb[1]=right[1];
+        info.right_led_rgb[2]=right[2];
+        qDebug()<<tr("[%1,%2] %3,%4,%5,%6,%7,%8").arg(__FILE__).arg(__LINE__).arg(left[0]).arg(left[1]).arg(left[2]).arg(right[0]).arg(right[1]).arg(right[2]);
+
+        protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
+        tx_pack.append((char*)tx_buffer,tx_length);
+
         x->SendMessage(tx_pack);
       }
     }

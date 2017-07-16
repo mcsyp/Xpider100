@@ -38,14 +38,7 @@ bool CommandDegree::Exec(QStringList argv){
   }
   //step3. check target
   float target_theta = 0;
-  if(argv.contains(RAND)){
-    static unsigned int rand_counter=0;
-    rand_counter++;
-    srand(rand_counter+time(NULL));
-    target_theta = 2*M_PI*static_cast<float>(rand())/static_cast<float>(RAND_MAX);
-  }else{
-    target_theta = fmod(argv[2].toFloat(),360.0f)*M_PI/180.0f;
-  }
+  target_theta = fmod(argv[2].toFloat(),360.0f)*M_PI/180.0f;
 
   qDebug()<<tr("[%1,%2] executing degree %3 %4")
             .arg(__FILE__).arg(__LINE__)
@@ -71,9 +64,15 @@ bool CommandDegree::Exec(QStringList argv){
   for(int i=0;i<local_xpider_queue.size();++i){
     xpider_opti_t x = local_xpider_queue[i];
     if(is_all_included || x.id == id){
+      if(argv.contains(RAND)){
+        static unsigned int rand_counter=0;
+        rand_counter++;
+        srand(rand_counter+time(NULL));
+        target_theta = 2.0f*M_PI*(float)(rand()%360)/180.0f;
+      }
       float delta = ComputeDelta(x,target_theta);
       SendCommand(x.id,delta);
-      //qDebug()<<tr("[%1,%2] sending %3 to xpider_%4").arg(__FILE__).arg(__LINE__).arg(delta).arg(x.id);
+      qDebug()<<tr("[%1,%2] sending %3 to xpider_%4").arg(__FILE__).arg(__LINE__).arg(delta).arg(x.id);
     }
   }
 
