@@ -100,7 +100,7 @@ int OptiService::StartService(){
 
   //init xpider location (the land mark loacation )
   do{
-    ptr_location_->GenerateInitLocation(0,-1,4,12);
+    ptr_location_->GenerateInitLocation(0,0,10,10);
     UpdateJSONEncodeLandmarks();
   }while(0);
 

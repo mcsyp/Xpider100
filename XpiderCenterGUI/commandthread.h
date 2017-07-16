@@ -51,6 +51,5 @@ public:
   virtual const QString & Key() const=0;//the command word
 protected:
   QString example_;
-
 };
 #endif // COMMANDTHREAD_H

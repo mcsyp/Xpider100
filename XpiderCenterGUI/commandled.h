@@ -8,10 +8,11 @@ class CommandLed :public CommandParser
 public:
   static const QString KEY;//"led"
   static const QString ALL;//"all"
-  static constexpr int MIN_LEN=6;
+  static constexpr int MIN_LEN=3;
   static const QString LED_L;//"-l"
   static const QString LED_R;//"-r"
   static const QString LED_BOTH;//"-b"
+  static const QString LED_RANDOM;//"rand"
 
   CommandLed(QObject * parent=NULL);
 

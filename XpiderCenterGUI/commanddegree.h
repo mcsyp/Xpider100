@@ -11,6 +11,7 @@ class CommandDegree :public CommandParser
 public:
   static const QString KEY;//"degree"
   static const QString ALL;//"all"
+  static const QString RAND;//"rand"
   static constexpr int MIN_LEN=3;
 
   explicit CommandDegree(QObject *parent = 0);

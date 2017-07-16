@@ -6,6 +6,7 @@
 #include "commandaim.h"
 #include "commandled.h"
 #include "commanddegree.h"
+#include "commandwalk.h"
 
 //QMap<int, CommandThread*> CommandThread::g_cmd_map = QMap<int, CommandThread*>();
 CommandThread::CommandThread(QObject *parent) : QThread(parent)
@@ -26,6 +27,10 @@ CommandThread::CommandThread(QObject *parent) : QThread(parent)
   //degree
   CommandDegree* cmd_degree = new CommandDegree;
   cmd_map_.insert(cmd_degree->Key(),cmd_degree);
+
+  //walk
+  CommandWalk* cmd_walk = new CommandWalk;
+  cmd_map_.insert(cmd_walk->Key(),cmd_walk);
 
   //clear the cmd string
   cmd_text_.clear();

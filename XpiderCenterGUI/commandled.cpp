@@ -10,6 +10,7 @@ const QString CommandLed::ALL = QString("all");
 const QString CommandLed::LED_L = QString("-l");
 const QString CommandLed::LED_R = QString("-r");
 const QString CommandLed::LED_BOTH = QString("-b");
+const QString CommandLed::LED_RANDOM = QString("rand");
 
 CommandLed::CommandLed(QObject* parent):CommandParser(parent){
   QTextStream text;
@@ -38,21 +39,14 @@ bool CommandLed::Exec(QStringList argv){
     id = argv[1].toInt();
   }
 
-
-
   //step3. parse the color
   uint8_t left[]={0,0,0};
   uint8_t right[]={0,0,0};
+
   int offset_left = argv.indexOf(LED_L);
   int offset_right = argv.indexOf(LED_R);
   int offset_both = argv.indexOf(LED_BOTH);
-#if 0
-  qDebug()<<tr("[%1,%2] both=%3 left=%4 right=%5")
-            .arg(__FILE__).arg(__LINE__)
-            .arg(offset_both)
-            .arg(offset_left)
-            .arg(offset_right);
-#endif
+
   if(offset_both>0 && argv.length()>=offset_both+4){
     //if "-b" is set, both led are the same color
     left[0] = argv[offset_both+1].toInt();
@@ -62,7 +56,6 @@ bool CommandLed::Exec(QStringList argv){
     right[1] = argv[offset_both+2].toInt();
     right[2] = argv[offset_both+3].toInt();
   }else{
-    //if "-l" or "-r" is set, both led are the same color
     if(offset_left>0 && argv.length()>=offset_left+4){
       left[0] = argv[offset_left+1].toInt();
       left[1] = argv[offset_left+2].toInt();
@@ -72,6 +65,16 @@ bool CommandLed::Exec(QStringList argv){
       right[0] = argv[offset_right+1].toInt();
       right[1] = argv[offset_right+2].toInt();
       right[2] = argv[offset_right+3].toInt();
+    }
+  }
+  if(argv.contains(LED_RANDOM)){
+    static unsigned int rand_counter=0;
+    ++rand_counter;
+    srand(rand_counter);
+    for(int i=0;i<3;++i){
+      uint8_t color = rand()%255;
+      left[i] = color;
+      right[i] = color;
     }
   }
 

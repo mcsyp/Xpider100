@@ -5,9 +5,11 @@
 #include <xpider_ctl/xpider_protocol.h>
 #include <xpidersocketthread.h>
 #include <math.h>
+#include <time.h>
 
 const QString CommandDegree::KEY = QString("degree");
 const QString CommandDegree::ALL = QString("all");
+const QString CommandDegree::RAND = QString("rand");
 
 CommandDegree::CommandDegree(QObject* parent):CommandParser(parent){
   QTextStream text;
@@ -35,9 +37,17 @@ bool CommandDegree::Exec(QStringList argv){
     id = argv[1].toInt();
   }
   //step3. check target
-  float target_theta = fmod(argv[2].toFloat(),360.0f)*M_PI/180.0f;
+  float target_theta = 0;
+  if(argv.contains(RAND)){
+    static unsigned int rand_counter=0;
+    rand_counter++;
+    srand(rand_counter+time(NULL));
+    target_theta = 2*M_PI*static_cast<float>(rand())/static_cast<float>(RAND_MAX);
+  }else{
+    target_theta = fmod(argv[2].toFloat(),360.0f)*M_PI/180.0f;
+  }
 
-  qDebug()<<tr("[%1,%2] executing degree %3 %4 %5")
+  qDebug()<<tr("[%1,%2] executing degree %3 %4")
             .arg(__FILE__).arg(__LINE__)
             .arg(argv[1])
             .arg(target_theta);
@@ -55,6 +65,7 @@ bool CommandDegree::Exec(QStringList argv){
     QThread::msleep(5);
   }
   if(local_xpider_queue.size()==0)return false;
+
 
   //step4. compute target
   for(int i=0;i<local_xpider_queue.size();++i){
