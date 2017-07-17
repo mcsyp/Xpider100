@@ -167,6 +167,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         if(value_list.size()<3)break;
 
         xpider_opti_t opti_info;
+        opti_info.id = -1;
         opti_info.x  = value_list[0].toFloat();
         opti_info.y  = value_list[1].toFloat();
         opti_info.theta = value_list[2].toFloat();
@@ -187,7 +188,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
       last_id_len = id_len;
     }
 
-    QMap<QString, xpider_opti_t> temp_raw_map;
+    QMap<QString, xpider_opti_t> connected_xpider_map;
     //step3.call tracing processor
     if(opti_info_list.size() && id_len>0){
       //step1. match all xpiders
@@ -200,9 +201,10 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
       for(int i=0;i<ptr_planner_thread_->xpider_queue_.size();++i){
         xpider_opti_t xpider = ptr_planner_thread_->xpider_queue_[i];
         //also save it to a list, but only pointer
-
-        QString str_key = PointToString(QPointF(xpider.x,xpider.y));
-        temp_raw_map.insert(str_key,xpider);//we are using point as an ID of the xpider!!
+        if(xpider.id>=0){//to find the real xpdier
+          QString str_key = PointToString(QPointF(xpider.x,xpider.y));
+          connected_xpider_map.insert(str_key,xpider);//we are using point as an KEY of the xpider!!
+        }
       }
     }
 
@@ -222,8 +224,8 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         //update ID
         //HASH MAP checking is MUCH MUCH faster!!
         QString str_key = PointToString(QPointF(raw.x,raw.y));
-        if(temp_raw_map.contains(str_key)){
-          xpider_opti_t value = temp_raw_map.value(str_key);
+        if(connected_xpider_map.contains(str_key)){
+          xpider_opti_t value = connected_xpider_map.value(str_key);
           jobj["id"]=static_cast<int>(value.id);
           if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
              //if this xpider is a socket connected xpider!!!!

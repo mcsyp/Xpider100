@@ -2,7 +2,7 @@
 #define GLOBAL_XPIER_H
 
 typedef struct xpider_opti_s{        //xpider info from optitrac
-    uint32_t id;
+    int id;
 
     uint8_t loose_count; //for YETIAN's location count
 
@@ -16,7 +16,7 @@ typedef struct xpider_opti_s{        //xpider info from optitrac
 }xpider_opti_t;
 
 typedef struct xpider_tp_s{          //输出的结构体
-    uint32_t id;
+    int id;
     float delta_theta; //[-pi, pi]
     int detla_step;
 }xpider_tp_t;
