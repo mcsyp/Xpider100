@@ -52,6 +52,7 @@ public:
 
   //enable the trajectory planner thread
   Q_INVOKABLE void enablePlanner(bool b);
+  Q_INVOKABLE void uiSelectXpider(int id, bool select);//call this ui to select one xpider
 
   //run the command list in command thread framework
   Q_INVOKABLE void runCommandText(QString cmd_text);

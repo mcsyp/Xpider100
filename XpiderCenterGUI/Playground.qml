@@ -13,6 +13,7 @@ Rectangle {
     property var real_height_:4.5 //2 meter
 
     property var reset_pos_:-500
+    property var selected_xpider_index_:-1
 
 
     function createXpider(num){
@@ -39,6 +40,7 @@ Rectangle {
                                                         "dev_id":i,
                                                         "z":5,
                                                         "visible":true,});
+
                 target_queue_.push(dynamic_comp_);
             }
         }
@@ -51,6 +53,7 @@ Rectangle {
                                                        {"x":reset_pos_,
                                                         "y":reset_pos_,
                                                         "z":2,
+                                                        "index_":i,
                                                         "visible":true,});
                 cross_queue_.push(dynamic_comp_);
             }
@@ -80,19 +83,19 @@ Rectangle {
 
     MouseArea{
         anchors.fill: parent        
-        property var selected_xpider_index_:-1
+        acceptedButtons: Qt.LeftButton| Qt.RightButton
         onClicked: {
-            var index = selectXpider(mouse.x,mouse.y);
-            //console.log("selected index:",selected_xpider_index_," mouse_index:",index);
-            if(selected_xpider_index_>=0 && index<0 && index!==-2){
-                var dev_id = xpider_queue_[selected_xpider_index_].dev_id;
-
-                //push target to c++
-                var real_pos = convertFromScreenToReal(mouse.x,mouse.y);
-                opti_server_.pushTarget(dev_id,real_pos[0],real_pos[1]);
-                //console.log("selected target id:",dev_id," x:",real_pos[0]," y:",real_pos[1]);
-            }else{
-                selected_xpider_index_ = index;
+            switch(mouse.button){
+            case Qt.LeftButton:
+                selectXpider(mouse.x,mouse.y);
+                break;
+            case Qt.RightButton:
+                if(selected_xpider_index_>=0){
+                    var dev_id = xpider_queue_[selected_xpider_index_].dev_id;
+                    var real_pos = convertFromScreenToReal(mouse.x,mouse.y);
+                    opti_server_.pushTarget(dev_id,real_pos[0],real_pos[1]);
+                }
+                break;
             }
         }
     }
@@ -110,18 +113,12 @@ Rectangle {
 
         //console.log("min_dis is:",min_dis);
         if(min_dis<40 && xpider_queue_[min_index].dev_id>=0){
-            for(var i=0;i<xpider_queue_.length;++i){
-                var selected = (i===min_index && !xpider_queue_[i].selected_);
-                xpider_queue_[i].setSelected(selected);
-            }
-            if(xpider_queue_[min_index].selected_) {
-                return min_index;
-            }else{//cancel selection
+            var selected = !xpider_queue_[min_index].selected_;
+            opti_server_.uiSelectXpider(xpider_queue_[min_index].dev_id,selected);
+            if(!selected){
                 opti_server_.removeTarget(xpider_queue_[min_index].dev_id);
-                return -2;
             }
         }
-        return -1;
     }
 
     function resetAllTargets(){
@@ -145,6 +142,7 @@ Rectangle {
                     xpider_queue_[i].dev_id = xpider.id;
                     xpider_queue_[i].label_ = xpider.label;
                     xpider_queue_[i].visible = true;
+                    xpider_queue_[i].setSelected(xpider.id>=0 && xpider.selected);
 
                     //show target
                     if(xpider.id>=0){
@@ -158,7 +156,12 @@ Rectangle {
                         //            " y:",xpider_queue_[i].y,
                         //            " target_x:",target_queue_[i].x,
                         //            " target_y:",target_queue_[i].y);
+                        if(xpider.selected){
+                            selected_xpider_index_ = i;//selected index is JUST INDEX. NOT ID!!
+                            //console.log("selected xpider id is ",xpider.id);
+                        }
                     }
+
                 }else{
                     xpider_queue_[i].visible = false;
                     target_queue_[i].visible = false;

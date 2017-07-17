@@ -68,14 +68,14 @@ Item {
         to:360
     }
     function setSelected(pressed){
-        selected_ = pressed;
-        if(selected_){
+        if(pressed!==selected_ && pressed){
             animate_scale.target=xpider_img_;
             frame_scale_.target = xpider_selected_
             frame_rotate_.running=true
             animate_scale.running=true;
             frame_scale_.running=true;
         }
+        selected_ = pressed;
     }
 /*
     MouseArea{

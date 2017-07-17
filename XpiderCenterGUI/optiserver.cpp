@@ -218,6 +218,7 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         jobj["x"] = raw.x;
         jobj["y"] = raw.y;
         jobj["label"] = "UN";
+        jobj["selected"] = false;
         //update ID
         //HASH MAP checking is MUCH MUCH faster!!
         QString str_key = PointToString(QPointF(raw.x,raw.y));
@@ -227,8 +228,10 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
           if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
              //if this xpider is a socket connected xpider!!!!
              //its label has a different name
-             QString host_name = XpiderSocketThread::socket_list_[static_cast<int>(value.id)]->Hostname();
+             XpiderSocketThread * x_socket = XpiderSocketThread::socket_list_[static_cast<int>(value.id)];
+             QString host_name = x_socket->Hostname();
              jobj["label"]=host_name.split(".").last();
+             jobj["selected"] = x_socket->ui_selected_;
 
              //update its landmark positiond
              ptr_location_->UpdateLandmark(value.id,value.x,value.y);
@@ -351,6 +354,17 @@ void OptiService::clearTargets(){
 
 void OptiService::enablePlanner(bool b){
   is_planner_running_ = b;
+}
+
+void OptiService::uiSelectXpider(int id, bool select){
+  if(id>=0 && id<XpiderSocketThread::socket_list_.size()){
+    for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
+      XpiderSocketThread* x_sock = XpiderSocketThread::socket_list_.at(i);
+      if(x_sock){
+        x_sock->ui_selected_ = (id==i) && select;
+      }
+    }
+  }
 }
 
 void OptiService::runCommandText(QString cmd_text){

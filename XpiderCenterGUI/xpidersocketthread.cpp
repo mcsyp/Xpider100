@@ -24,6 +24,8 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
 
   //init event thread
   moveToThread(&event_thread_);
+
+  ui_selected_=false;
 }
 XpiderSocketThread::~XpiderSocketThread(){
   disconnectFromHost();

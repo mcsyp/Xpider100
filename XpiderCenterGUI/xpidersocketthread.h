@@ -66,6 +66,8 @@ private:
   int last_alive_tiggered_;
   bool is_alive_;
   QByteArray rx_data_;
+public:
+  bool ui_selected_;
 };
 
 #endif // XPIDERSOCKETTHREAD_H
