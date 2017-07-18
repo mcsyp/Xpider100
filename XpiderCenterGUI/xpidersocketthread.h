@@ -22,8 +22,8 @@ public:
   typedef QVector<XpiderSocketThread*> XpiderList;
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
-  static constexpr int INTERVAL_RETRY=3000;
-  static constexpr int RX_MAX_SIZE=128;
+  static const int RX_HB_TIMEOUT=500;//10sec
+  static const int RX_HB_MAX=100000;
 
   static XpiderList socket_list_;
 
@@ -42,7 +42,9 @@ public:
 
   void StopWalking();
   QString Hostname()const{ return host_name_;}
-
+  int HbCounter()const{return hb_counter_;}
+signals:
+  void aliveStateChange(bool alive,const XpiderSocketThread* socket);
 public slots:
   void onTimeoutRetry();
 
@@ -55,16 +57,16 @@ public slots:
 
 protected:
   //QTimer timer_retry_;
-  QTime time_clock_;
+  QTime hb_time_;
 
   QString host_name_;
   int host_port_;
 
   hdlc_qt::HDLC_qt hdlc_;
   QThread event_thread_;
-private:
-  int last_alive_tiggered_;
-  bool is_alive_;
+
+  int hb_counter_;
+
   QByteArray rx_data_;
 public:
   bool ui_selected_;

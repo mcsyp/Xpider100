@@ -17,7 +17,8 @@ SOURCES += main.cpp \
     trajectorythread.cpp \
     commandaim.cpp \
     commanddegree.cpp \
-    commandwalk.cpp
+    commandwalk.cpp \
+    commandrotate.cpp
 
 RESOURCES += qml.qrc
 
@@ -62,7 +63,8 @@ HEADERS += \
     trajectorythread.h \
     commandaim.h \
     commanddegree.h \
-    commandwalk.h
+    commandwalk.h \
+    commandrotate.h
 
 DISTFILES += \
     main.qml

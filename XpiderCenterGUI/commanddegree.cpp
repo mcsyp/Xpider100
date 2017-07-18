@@ -98,12 +98,12 @@ void CommandDegree::SendCommand(int id, float delta_theta)
   info.walk_speed = 0;
   info.walk_step = 0;
   protocol.GetBuffer(protocol.kAutoMove, &tx_buffer, &tx_length);
-
   tx_pack.append((char*)tx_buffer,tx_length);
 
   XpiderSocketThread *x = XpiderSocketThread::socket_list_.at(id);
   if(x){
     x->SendMessage(tx_pack);
+    QThread::msleep(10);
   }
 }
 

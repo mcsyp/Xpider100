@@ -14,6 +14,8 @@ Rectangle {
 
     property var reset_pos_:-500
     property var selected_xpider_index_:-1
+    property var opti_counter_:0
+    property var xpider_available_counter_:0
 
 
     function createXpider(num){
@@ -97,6 +99,8 @@ Rectangle {
                 }
                 break;
             }
+            var click_pos = convertFromScreenToReal(mouse.x,mouse.y);
+            console.log("clicked:"+click_pos[0]+","+click_pos[1]);
         }
     }
     function selectXpider(x,y){
@@ -129,6 +133,8 @@ Rectangle {
         target: opti_server_
         onXpiderListUpdate:{
             var xpider_list = JSON.parse(str_json);
+            opti_counter_ = xpider_list.length;
+            var available_counter=0;
             for(var i=0;i<xpider_queue_.length;++i){
                 if(i<xpider_list.length){
                     var xpider = xpider_list[i];
@@ -160,12 +166,14 @@ Rectangle {
                             selected_xpider_index_ = i;//selected index is JUST INDEX. NOT ID!!
                             //console.log("selected xpider id is ",xpider.id);
                         }
+                        ++available_counter;
                     }
 
                 }else{
                     xpider_queue_[i].visible = false;
                     target_queue_[i].visible = false;
                 }
+                xpider_available_counter_ = available_counter
             }
         }
         onLandmarkListUpdate:{

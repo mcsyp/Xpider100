@@ -33,6 +33,12 @@ public:
   static constexpr int XPIDER_ROTATE_SPEED=100;
   static constexpr float XPIDER_MIN_TARGET_DISTANCE=0.05;//in [meter], and use Manhatton distance
 
+  static constexpr float XPIDER_INIT_SQUARE_X=0.0f;
+  static constexpr float XPIDER_INIT_SQUARE_Y=0.0f;
+  static constexpr int   XPIDER_INIT_SQUARE_ROWS=8;
+  static constexpr int   XPIDER_INIT_SQUARE_COLS=8;
+  static constexpr int XPIDER_ALIVE_TIMEOUT=1000;
+  static constexpr int XPIDER_RETRY_TIMEOUT=3000;
   enum SERVER_CMDID {
     SERVER_UPLAOD_REQ=0x9,
     SERVER_UPLAOD_ACK=0xA,
@@ -70,6 +76,8 @@ signals:
 
   void optitrackConnected(bool connected);
   void xpiderAliveUpdate(int number);
+
+  void updateXpiderSocket(QString str_json);
 protected:
   static OptiService* ptr_instance;
 protected slots:
@@ -79,6 +87,7 @@ protected slots:
   void onNewConnection();
 
   void onPayloadReady(int cmdid,QByteArray & payload);
+  void onXpiderSocketStateTimeout();
 private:
   /*purpose: this will sync the xpider opti pos and target pos by the sync flag in target strcuture
    *input:
@@ -106,6 +115,7 @@ private:
   //time relatedd task
   QTime time_;
   QTimer timer_retry_;
+  QTimer timer_socket_state_;
   int last_trigger_;
 
 

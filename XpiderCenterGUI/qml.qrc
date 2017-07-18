@@ -19,5 +19,6 @@
         <file>images/cross.png</file>
         <file>images/spider_2.png</file>
         <file>CommandPanel.qml</file>
+        <file>XpiderSocketList.qml</file>
     </qresource>
 </RCC>

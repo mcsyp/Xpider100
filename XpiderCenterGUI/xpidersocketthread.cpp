@@ -42,11 +42,7 @@ void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
   host_name_ = host_name;
   host_port_ = host_port;
 
-  time_clock_.start();
-  //timer_retry_.start(INTERVAL_RETRY);
-
-  is_alive_=false;
-  last_alive_tiggered_=0;
+  hb_time_.start();
 
   event_thread_.start();
 }
@@ -101,15 +97,19 @@ void XpiderSocketThread::onConnected(){
   protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
   tx_pack.append((char*)tx_buffer,tx_length);
   SendMessage(tx_pack);
+
+  //reset hb_counter
+  this->hb_counter_ = 0;
 }
 
 void XpiderSocketThread::onDisconnected(){
+  emit aliveStateChange(false,this);
   qDebug()<<tr("[%1,%2]xpider %3:%4 disconnected.").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
 }
 
 void XpiderSocketThread::onReadyRead(){
   rx_data_.clear();
-  rx_data_ = read(RX_MAX_SIZE);
+  rx_data_ = readAll();
   if(rx_data_.size()==0)return;
 
   //qDebug()<<tr("[%1,%2]rx bytes:%3").arg(__FILE__).arg(__LINE__).arg(rx_data_.size());
@@ -117,13 +117,13 @@ void XpiderSocketThread::onReadyRead(){
 }
 
 void XpiderSocketThread::onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size){
-  static const int HB_TIMEOUT=5000;//10sec
+  if(hb_time_.elapsed()>RX_HB_TIMEOUT){
+    hb_counter_=0;
+  }
+  hb_time_.restart();
+  hb_counter_ = (hb_counter_+1)%RX_HB_MAX;
 
-  int current_time = time_clock_.elapsed();
-  bool state = ((current_time-last_alive_tiggered_)<HB_TIMEOUT);
-  last_alive_tiggered_ = current_time;
-  is_alive_ = state;
-}
+ }
 void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   QByteArray tx_payload;
   tx_payload.append(XPIDER_MESSAGE_HEAD);
@@ -131,9 +131,7 @@ void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   write(tx_payload);
 }
 bool XpiderSocketThread::Available() const{
-  //return ((state()==ConnectedState) && is_alive_);
-  return (state()==ConnectedState);
-
+  return ((state()==ConnectedState) && (hb_time_.elapsed()<RX_HB_TIMEOUT));
 }
 
 void XpiderSocketThread::StopWalking()

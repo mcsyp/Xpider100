@@ -22,6 +22,7 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   connect(this,SIGNAL(newConnection()),this,SLOT(onNewConnection()));
   connect(&protocol_,SIGNAL(PayloadReady(int,QByteArray&)),
           this,SLOT(onPayloadReady(int,QByteArray&)));
+  connect(&timer_socket_state_,SIGNAL(timeout()),this,SLOT(onXpiderSocketStateTimeout()));
 
   time_.start();
 
@@ -100,13 +101,16 @@ int OptiService::StartService(){
 
   //init xpider location (the land mark loacation )
   do{
-    ptr_location_->GenerateInitLocation(0,0,10,10);
+    ptr_location_->GenerateInitLocation(XPIDER_INIT_SQUARE_X,
+                                        XPIDER_INIT_SQUARE_Y,
+                                        XPIDER_INIT_SQUARE_ROWS,
+                                        XPIDER_INIT_SQUARE_COLS);
     UpdateJSONEncodeLandmarks();
   }while(0);
 
   //init universal retry timer
-  timer_retry_.start(XpiderSocketThread::INTERVAL_RETRY);
-
+  timer_retry_.start(XPIDER_RETRY_TIMEOUT);
+  timer_socket_state_.start(XPIDER_ALIVE_TIMEOUT);
   //clear the target mask
   ui_target_mask_.clear();
   return this->serverPort();
@@ -182,11 +186,6 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
     const int id_size = XpiderSocketThread::socket_list_.size();
     uint32_t id_array[id_size];
     int id_len=AvailableXpiderSocketID(id_array,id_size);
-    static int last_id_len=0;
-    if(id_len!=last_id_len){
-      emit xpiderAliveUpdate(id_len);
-      last_id_len = id_len;
-    }
 
     QMap<QString, xpider_opti_t> connected_xpider_map;
     //step3.call tracing processor
@@ -265,7 +264,31 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
       ptr_planner_thread_->start();
     }
 
-  }//end if(SERVER_UPLAOD_REQ==cmdid)
+    }//end if(SERVER_UPLAOD_REQ==cmdid)
+}
+
+void OptiService::onXpiderSocketStateTimeout()
+{
+  static int last_len=0;
+  const int id_size = XpiderSocketThread::socket_list_.size();
+  uint32_t id_array[id_size];
+  int id_len=AvailableXpiderSocketID(id_array,id_size);
+  if(id_len!=last_len){
+      last_len=id_len;
+      emit xpiderAliveUpdate(id_len);
+  }
+
+  QJsonDocument jdoc;
+  QJsonArray jarray;
+  for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
+    XpiderSocketThread* sock = XpiderSocketThread::socket_list_.at(i);
+    QJsonObject jobj;
+    jobj["hostname"] = sock->Hostname();
+    jobj["hb"] = sock->HbCounter();
+    jarray.append(jobj);
+  }
+  jdoc.setArray(jarray);
+  emit updateXpiderSocket(QString(jdoc.toJson()));
 }
 
 void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)

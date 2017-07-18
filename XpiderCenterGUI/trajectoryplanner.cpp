@@ -59,7 +59,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
       delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
       out_action[i].id = info[i].id;
       out_action[i].delta_theta = delta_rad1;
-      out_action[i].detla_step = 2;
+      out_action[i].detla_step = 5;
     }
   }
 
@@ -79,7 +79,9 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
 
           if (D_dist < min_dis) {
             qDebug()<<"D_dist:"<<D_dist;
-            if (info[j].valid_target == false) {  //j是静止的蜘蛛.
+
+            //j是静止的蜘蛛.
+            if (info[j].valid_target == false) {
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
@@ -96,11 +98,13 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
                   }
                 }
               }                                   //j不在圆内，按预定角度步数走.
-            } else {                              //j是运动的蜘蛛.
+            } else {
+
+              //j是运动的蜘蛛.
               float x1 = info[i].x + L*cos(A[i]);
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
-              if (r < R) {
+              if (r < R) {                         //j在i的前方
                 if (priority[i] < priority[j]) {
                   out_action[j].detla_step = 0;    //此时i先走，i应检测前方.
                   qDebug()<<"_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_";
@@ -130,7 +134,19 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
                     }
                   }
                 }
-              }
+              } /*else {                       //j不在i前方，预测ij下一时刻是否会撞
+                float L_number_step = 0.05;
+                float x_i = info[i].x + L_number_step*cos(A[i]);
+                float y_i = info[i].y + L_number_step*cos(A[i]);
+                float x_j = info[j].x + L_number_step*cos(A[j]);
+                float y_j = info[j].y + L_number_step*cos(A[j]);
+                float D_forecase = sqrt(pow(x_i-x_j, 2) + pow(y_i-y_j, 2));
+                if (D_forecase < 0.18) {
+                  out_action[j].detla_step = 0;
+                  out_action[j].delta_theta = out_action[i].delta_theta + M_PI/2;
+                  wait_number[j]++;
+                }
+              }*/
             }
           }
         }

@@ -21,40 +21,40 @@ ApplicationWindow {
     }
 
     Rectangle{
-        id: connection_state_rect_
+        id: opti_connection_state_rect_
         opacity: 0.7
-        width:connection_state_txt_.contentWidth+10
-        height:connection_state_txt_.contentHeight
+        width:opti_connection_state_txt_.contentWidth+10
+        height:opti_connection_state_txt_.contentHeight
         x:0
         y:main_window_.height/5
         property bool is_connected: false
         color: (is_connected)?"Orange":"White"
 
         Text{
-            id: connection_state_txt_
+            id: opti_connection_state_txt_
             anchors.fill: parent
             font.pixelSize: 15
             verticalAlignment: Text.AlignVCenter
-            color:(connection_state_rect_.is_connected)?"White":"Black"
+            color:(opti_connection_state_rect_.is_connected)?"White":"Black"
             font.bold: true
-            text: (connection_state_rect_.is_connected)?"Optitrack online":"Optitrack offline";
+            text: (opti_connection_state_rect_.is_connected)?"Optitrack online":"Optitrack offline";
         }
         SpringAnimation{
-            id:animate_scale
-            target:connection_state_rect_
+            id:opti_animate_scale
+            target:opti_connection_state_rect_
             property: "x"
             spring: 3.0
             damping: 0.2
             epsilon: 0.2
-            from:-connection_state_rect_.width-50
+            from:-opti_connection_state_rect_.width-50
             to:0
             duration:45
         }
         Connections{
             target:opti_server_
             onOptitrackConnected:{
-                connection_state_rect_.is_connected = connected;
-                animate_scale.running=true
+                opti_connection_state_rect_.is_connected = connected;
+                opti_animate_scale.running=true
             }
         }
     }
@@ -67,7 +67,7 @@ ApplicationWindow {
         width:xpider_number_txt_.contentWidth+10
         height: xpider_number_txt_.contentHeight
         x:0
-        y:connection_state_rect_.y+connection_state_rect_.height+3
+        y:opti_connection_state_rect_.y+opti_connection_state_rect_.height+3
         property int xpider_number_: 0
         visible:xpider_number_>0
         Text{
@@ -77,15 +77,42 @@ ApplicationWindow {
             font.pixelSize: 15
             color:"White"
         }
-
+        SpringAnimation{
+            id:xpider_animate_scale
+            target:opti_connection_state_rect_
+            property: "scale"
+            spring: 3.0
+            damping: 0.2
+            epsilon: 0.2
+            from:0.6
+            to:1.0
+            duration:30
+        }
         Connections{
             target:opti_server_
             onXpiderAliveUpdate:{
                 xpider_number_rect_.xpider_number_=number;
+                xpider_animate_scale.running = true;
             }
         }
     }
-
+    Rectangle{
+        id: opti_number_rect_
+        color: "Red"
+        opacity: 0.80
+        width:opti_number_txt_.contentWidth+10
+        height: opti_number_txt_.contentHeight
+        x:0
+        y:xpider_number_rect_.y+xpider_number_rect_.height+3
+        visible:(playground_.xpider_available_counter_+playground_.opti_counter_>0)
+        Text{
+            id:opti_number_txt_
+            verticalAlignment: Text.AlignVCenter
+            text: "< "+playground_.xpider_available_counter_+"/"+playground_.opti_counter_+" > detected"
+            font.pixelSize: 12
+            color:"White"
+        }
+    }
     Button{
         id:start_btn_
         property bool is_planner_running:false
