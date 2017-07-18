@@ -22,7 +22,7 @@ public:
   typedef QVector<XpiderSocketThread*> XpiderList;
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
-  static const int RX_HB_TIMEOUT=500;//10sec
+  static const int RX_HB_TIMEOUT=1500;//10sec
   static const int RX_HB_MAX=100000;
 
   static XpiderList socket_list_;

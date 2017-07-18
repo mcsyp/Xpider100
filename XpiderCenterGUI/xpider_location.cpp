@@ -10,7 +10,7 @@ XpiderLocation::XpiderLocation() {
 void XpiderLocation::GenerateInitLocation(float center_x, float center_y, uint8_t rows, uint8_t cols) {
   Point top_left, temp_point;
   top_left.x = center_x - cols*ROBOT_PLACE_WIDTH/2.0f;
-  top_left.y = center_y - rows*ROBOT_PLACE_WIDTH/2.0f;
+  top_left.y = center_y + rows*ROBOT_PLACE_WIDTH/2.0f;
 
   // qDebug() << "top_left_x:" << top_left.x << ", top_left_y:" << top_left.y;
 
@@ -20,7 +20,7 @@ void XpiderLocation::GenerateInitLocation(float center_x, float center_y, uint8_
   for(uint8_t i=0; i<rows; i++) {
     for(uint8_t j=0; j<cols; j++) {
       temp_point.x = top_left.x + ROBOT_PLACE_WIDTH*(j+0.5);
-      temp_point.y = top_left.y + ROBOT_PLACE_WIDTH*(i+0.5);
+      temp_point.y = top_left.y - ROBOT_PLACE_WIDTH*(i+0.5);
       initialize_points_.push_back(temp_point);
     }
   }

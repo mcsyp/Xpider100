@@ -5,7 +5,7 @@ TrajectoryPlanner::TrajectoryPlanner()
   max_dis_id = 0;
   max_dis_x = 0;
   max_dis_y = 0;
-  min_dis = 0.22;             //20cm
+  min_dis = 0.20;             //20cm
   min_target_dis = 0.15;      //6cm
   wait_max_number = 2;
 }
