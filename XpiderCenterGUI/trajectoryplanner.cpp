@@ -59,13 +59,14 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
       delta_rad1 = abs(delta_rad1)-abs(delta_rad2)>0 ? delta_rad2 : delta_rad1;
       out_action[i].id = info[i].id;
       out_action[i].delta_theta = delta_rad1;
-      out_action[i].detla_step = 5;
+      out_action[i].detla_step = 2;
     }
   }
 
+
   //step3:路径规划.
   float L = 0.18f;
-  float R = 0.1f;
+  float R = 0.09f;
   for (int i = 0; i<info_len; i++) {
     if (info[i].valid_target == true) {          //i为需要移动的.
       for (int j=0; j<info_len; j++) {
@@ -156,10 +157,11 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
 
   //step4:长时间等待，触发此处
   for (int i=0; i<info_len; i++) {
-    if (wait_number[i] > 3) {
+    if (wait_number[i] > 6) {
       qDebug()<<"+++++++++++++++++++++++++++++++";
       wait_number[i] = 0;
-      out_action[i].delta_theta = A[i] + M_PI/2;   //
+      out_action[i].detla_step = 2;
+      out_action[i].delta_theta = A[i] + M_PI/2;
       for(int j=0; j<info_len; j++) {
         float x1 = info[j].x + L*cos(A[i]);
         float y1 = info[j].y + L*sin(A[i]);

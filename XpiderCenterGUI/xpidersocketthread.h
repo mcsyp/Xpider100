@@ -31,7 +31,6 @@ public:
   virtual ~XpiderSocketThread();
 
   void StartConnection(QString &host_name,int host_port);
-
   /*Purpose:append the message to tx_queue and send them later
    *input:
    * @tx_message, non-hdlc wrapped and non-0155 head included
@@ -45,6 +44,7 @@ public:
   int HbCounter()const{return hb_counter_;}
 signals:
   void aliveStateChange(bool alive,const XpiderSocketThread* socket);
+  void triggerMessage(QByteArray raw_message);
 public slots:
   void onTimeoutRetry();
 
@@ -55,6 +55,7 @@ public slots:
   void onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size);
   void onHdlcEncodedByte(QByteArray encoded_data);
 
+  void onMessageReady(QByteArray raw_message);
 protected:
   //QTimer timer_retry_;
   QTime hb_time_;

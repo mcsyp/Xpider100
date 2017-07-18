@@ -23,7 +23,6 @@ void TrajectoryThread::run(){
 #endif
 
   int action_len = planner_.Plan(&(xpider_queue_[0]),xpider_queue_.size(),action_list,action_size);
-  #if 1
   //step2.call all xpiders to move
   for(int i=0;i<action_len;++i){
     XpiderSocketThread * socket=NULL;
@@ -70,5 +69,5 @@ void TrajectoryThread::run(){
 
     }
   }
-  #endif
+
 }

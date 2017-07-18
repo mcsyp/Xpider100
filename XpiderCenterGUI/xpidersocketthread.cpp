@@ -19,6 +19,8 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
   connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
 
+  connect(this,SIGNAL(triggerMessage(QByteArray)),this,SLOT(onMessageReady(QByteArray)));
+
   //init id
   socket_list_.push_back(this);
 
@@ -48,14 +50,12 @@ void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
 }
 
 void XpiderSocketThread::SendMessage(QByteArray &raw_message){
-  if(raw_message.size()){
-    hdlc_.frameDecode(raw_message,raw_message.size());
-  }
+  emit triggerMessage(raw_message);
 }
 
 void XpiderSocketThread::onTimeoutRetry(){
   if(state()==UnconnectedState){
-    qDebug()<<tr("[%1,%2]connecting to %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
+    //qDebug()<<tr("[%1,%2]connecting to %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
     connectToHost(host_name_,host_port_);
   }else if(state()==ConnectedState){
     QByteArray payload;
@@ -117,21 +117,33 @@ void XpiderSocketThread::onReadyRead(){
 }
 
 void XpiderSocketThread::onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size){
+  static int last_hb_counter=0;
   if(hb_time_.elapsed()>RX_HB_TIMEOUT){
     hb_counter_=0;
   }
   hb_time_.restart();
   hb_counter_ = (hb_counter_+1)%RX_HB_MAX;
-
- }
+  if(hb_counter_!=last_hb_counter){
+    qDebug()<<tr("[%1,%2] %3 hb counter:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(hb_counter_);
+    last_hb_counter = hb_counter_;
+  }
+}
 void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   QByteArray tx_payload;
   tx_payload.append(XPIDER_MESSAGE_HEAD);
   tx_payload.append(encoded_data);
   write(tx_payload);
 }
+
+void XpiderSocketThread::onMessageReady(QByteArray raw_message){
+  if(raw_message.size()){
+    hdlc_.frameDecode(raw_message,raw_message.size());
+  }
+  qDebug()<<tr("[%1,%2]").arg(__FILE__).arg(__LINE__);
+}
 bool XpiderSocketThread::Available() const{
-  return ((state()==ConnectedState) && (hb_time_.elapsed()<RX_HB_TIMEOUT));
+  //return ((state()==ConnectedState) && (hb_time_.elapsed()<RX_HB_TIMEOUT));
+  return (state()==ConnectedState);
 }
 
 void XpiderSocketThread::StopWalking()

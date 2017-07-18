@@ -39,6 +39,7 @@ void XpiderLocation::UpdateLandmark(int index, float x, float y){
     initialize_points_[index].x = x;
     initialize_points_[index].y = y;
   }
+  //qDebug() << "update location: " << index << ":" << x << ":" << y;
 }
 
 void XpiderLocation::GetInitialMatrixInfo(float &center_x, float &center_y, uint8_t &rows, uint8_t &cols){

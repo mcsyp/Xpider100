@@ -318,18 +318,13 @@ void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)
 int OptiService::AvailableXpiderSocketID(uint32_t id_array[], int id_size)
 {
   if(id_array==NULL || id_size<=0)return 0;
-  int id_index=0;
   int id_len=0;
-  for(auto iter=XpiderSocketThread::socket_list_.begin();
-      iter!=XpiderSocketThread::socket_list_.end();
-      ++iter)
-  {
-    XpiderSocketThread* xpider = *iter;
-    if(xpider && xpider->Available()){
-      id_array[id_len] = id_index;
-      ++id_len;
-    }
-    ++id_index;
+  for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
+      XpiderSocketThread* xpider = XpiderSocketThread::socket_list_.at(i);
+      if(xpider && xpider->Available()){
+        id_array[id_len] = i;
+        ++id_len;
+      }
   }
   return id_len;
 }

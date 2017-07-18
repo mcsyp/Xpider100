@@ -100,7 +100,7 @@ Rectangle {
                 break;
             }
             var click_pos = convertFromScreenToReal(mouse.x,mouse.y);
-            console.log("clicked:"+click_pos[0]+","+click_pos[1]);
+            //console.log("clicked:"+click_pos[0]+","+click_pos[1]);
         }
     }
     function selectXpider(x,y){

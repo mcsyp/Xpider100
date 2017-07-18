@@ -33,7 +33,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: xpider_labeltxt_.height+xpider_labeltxt_.y+1
         text:"["+dev_id+"]"
-        font.pixelSize: 8
+        font.pixelSize: 12
     }
 
     SpringAnimation{
