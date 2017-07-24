@@ -34,11 +34,13 @@ public:
   static constexpr float XPIDER_MIN_TARGET_DISTANCE=0.05;//in [meter], and use Manhatton distance
 
   static constexpr float XPIDER_INIT_SQUARE_X=0.0f;
-  static constexpr float XPIDER_INIT_SQUARE_Y=0.0f;
-  static constexpr int   XPIDER_INIT_SQUARE_ROWS=8;
-  static constexpr int   XPIDER_INIT_SQUARE_COLS=8;
+  static constexpr float XPIDER_INIT_SQUARE_Y=0.5f;
+  static constexpr int   XPIDER_INIT_SQUARE_ROWS=4;
+  static constexpr int   XPIDER_INIT_SQUARE_COLS=16;
+
   static constexpr int XPIDER_ALIVE_TIMEOUT=1000;
-  static constexpr int XPIDER_RETRY_TIMEOUT=3000;
+  static constexpr int OPTI_UPDATE_TIMEOUT=33;
+
   enum SERVER_CMDID {
     SERVER_UPLAOD_REQ=0x9,
     SERVER_UPLAOD_ACK=0xA,
@@ -87,7 +89,7 @@ protected slots:
   void onNewConnection();
 
   void onPayloadReady(int cmdid,QByteArray & payload);
-  void onXpiderSocketStateTimeout();
+  void onOptiUpdateTimeout();
 private:
   /*purpose: this will sync the xpider opti pos and target pos by the sync flag in target strcuture
    *input:
@@ -115,7 +117,7 @@ private:
   //time relatedd task
   QTime time_;
   QTimer timer_retry_;
-  QTimer timer_socket_state_;
+  QTimer timer_opti_info_;
   int last_trigger_;
 
 
@@ -130,5 +132,8 @@ private:
   CommandThread *ptr_cmd_thread_;
 
   QMap<unsigned int,QPointF> ui_target_mask_;//if ui updated any target info, save its flag in this mask
+
+  std::vector<xpider_opti_t> opti_info_list_;
+  bool is_updating_opti_;
 };
 #endif // ServerOpti_H

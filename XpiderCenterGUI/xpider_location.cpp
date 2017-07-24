@@ -75,7 +75,7 @@ bool XpiderLocation::GetRobotLocation(std::vector<xpider_opti_t> & raw_info, uin
       // qDebug() << "goin init" << initialize_points_[robot_index].x << initialize_points_[robot_index].y;
       xpider_opti_t data;
       data.id = robot_index;
-      data.loose_count = ROBOT_LOOSE_FRAME_COUNT;
+      data.loose_count = 0;
       data.x = initialize_points_[robot_index].x;
       data.y = initialize_points_[robot_index].y;
       out_list.push_back(data);
@@ -111,7 +111,7 @@ bool XpiderLocation::GetRobotLocation(std::vector<xpider_opti_t> & raw_info, uin
       /*
        * else remove the robot
        */
-      if(out_list[temp_index].loose_count >= ROBOT_LOOSE_FRAME_COUNT) {
+      if(out_list[temp_index].loose_count > ROBOT_LOOSE_FRAME_COUNT) {
         out_list.pop_back();
       } else {
         out_list[temp_index].loose_count++;

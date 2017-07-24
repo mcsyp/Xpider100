@@ -57,7 +57,7 @@ bool CommandAim::Exec(QStringList argv){
     if(local_xpider_queue.size()>0){
       break;
     }
-    QThread::msleep(5);
+    //QThread::msleep(5);
   }
   if(local_xpider_queue.size()==0){
     qDebug()<<tr("[%1,%2] No xpider found in the list.").arg(__FILE__).arg(__LINE__);

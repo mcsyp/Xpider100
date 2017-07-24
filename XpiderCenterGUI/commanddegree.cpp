@@ -55,7 +55,7 @@ bool CommandDegree::Exec(QStringList argv){
     if(local_xpider_queue.size()>0){
       break;
     }
-    QThread::msleep(5);
+    //QThread::msleep(5);
   }
   if(local_xpider_queue.size()==0)return false;
 
@@ -103,7 +103,7 @@ void CommandDegree::SendCommand(int id, float delta_theta)
   XpiderSocketThread *x = XpiderSocketThread::socket_list_.at(id);
   if(x){
     x->SendMessage(tx_pack);
-    QThread::msleep(10);
+    //QThread::msleep(10);
   }
 }
 

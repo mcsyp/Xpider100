@@ -22,8 +22,11 @@ public:
   typedef QVector<XpiderSocketThread*> XpiderList;
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
-  static const int RX_HB_TIMEOUT=1500;//10sec
-  static const int RX_HB_MAX=100000;
+
+  static constexpr int XPIDER_RETRY_TIMEOUT=2000;
+  static constexpr int RX_HB_TIMEOUT=1500;//10sec
+  static constexpr int RX_HB_MAX=100000;
+  static constexpr int TX_HB_TIMEOUT=5000;
 
   static XpiderList socket_list_;
 
@@ -44,7 +47,6 @@ public:
   int HbCounter()const{return hb_counter_;}
 signals:
   void aliveStateChange(bool alive,const XpiderSocketThread* socket);
-  void triggerMessage(QByteArray raw_message);
 public slots:
   void onTimeoutRetry();
 
@@ -54,8 +56,6 @@ public slots:
 
   void onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size);
   void onHdlcEncodedByte(QByteArray encoded_data);
-
-  void onMessageReady(QByteArray raw_message);
 protected:
   //QTimer timer_retry_;
   QTime hb_time_;

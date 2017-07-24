@@ -5,7 +5,7 @@ TrajectoryPlanner::TrajectoryPlanner()
   max_dis_id = 0;
   max_dis_x = 0;
   max_dis_y = 0;
-  min_dis = 0.20;             //20cm
+  min_dis = 0.18;             //20cm
   min_target_dis = 0.15;      //6cm
   wait_max_number = 2;
 }
@@ -13,26 +13,29 @@ TrajectoryPlanner::TrajectoryPlanner()
 int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_action[],int out_size){
 
   qDebug()<<"info_len:"<<info_len;
-
+  max_dis_x = 0;
+  max_dis_y = 0;
   //step1:找到最远的距离点,定为标准点
-  float target_dis = 0;
-  for (int i=0; i<info_len; i++) {
-    if (info[i].valid_target == true) {
-      float target_dis_ = sqrt(pow(info[i].target_x,2)+pow(info[i].target_y,2));
-      if (target_dis_ > target_dis) {
-        target_dis = target_dis_;                //找到最大的距离值
-        max_dis_x = info[i].target_x;
-        max_dis_y = info[i].target_y;
-      }
-    }
-  }
+//  float target_dis = 0;
+//  for (int i=0; i<info_len; i++) {
+//    if (info[i].valid_target == true) {
+//      float target_dis_ = sqrt(pow(info[i].target_x,2)+pow(info[i].target_y,2));
+//      if (target_dis_ > target_dis) {
+//        target_dis = target_dis_;                //找到最大的距离值
+//        max_dis_x = info[i].target_x;
+//        max_dis_y = info[i].target_y;
+//      }
+//    }
+//  }
+
+
 
   //step2:计算要行走的优先级.(优先级数组长度和info[]相同，只有行走的有优先级，不行走的置为0)
   float priority[200];
   float A[200];
   for (int i=0; i<info_len; i++) {
     if (info[i].valid_target == true) {
-      float p = sqrt(pow((info[i].x-max_dis_x),2)+pow((info[i].y-max_dis_y),2));
+      float p = sqrt(pow((info[i].target_x-max_dis_x),2)+pow((info[i].target_y-max_dis_y),2));
       priority[i] = p;
     } else {
       priority[i] = 0;
@@ -63,20 +66,15 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
     }
   }
 
-
+  /*
   //step3:路径规划.
   float L = 0.18f;
-  float R = 0.09f;
+  float R = 0.10f;
   for (int i = 0; i<info_len; i++) {
     if (info[i].valid_target == true) {          //i为需要移动的.
       for (int j=0; j<info_len; j++) {
         if (info[i].id != info[j].id) {
           float D_dist = sqrt(pow((info[i].x-info[j].x),2)+pow((info[i].y-info[j].y),2));
-//          float d_dist = sqrt(pow(info[i].x-info[i].target_x,2)+pow(info[i].y-info[i].target_y,2));
-//          if (d_dist < min_target_dis) {         //如果近似到达终点，优先级降为0.
-//            qDebug()<<"d_dist:"<<d_dist;
-//            priority[i] = 0;
-//          }
 
           if (D_dist < min_dis) {
             qDebug()<<"D_dist:"<<D_dist;
@@ -92,7 +90,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
                 float x1 = info[i].x + L*cos(A[i] + M_PI/2);//j在圆内，i转90°.
                 float y1 = info[i].y + L*sin(A[i] + M_PI/2);//判断i转角后的前进方向是否有障碍物.
                 for(int p=0; p<info_len; p++) {
-                  float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
+                  float r = sqrt(pow(info[p].x - x1, 2) + pow(info[p].y - y1, 2));
                   if (r < R) {                              //有障碍物，再转90°.
                     out_action[i].delta_theta = out_action[i].delta_theta + M_PI/2;
                     out_action[i].detla_step = 0;
@@ -106,7 +104,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
               float y1 = info[i].y + L*sin(A[i]);
               float r = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
               if (r < R) {                         //j在i的前方
-                if (priority[i] < priority[j]) {
+                if (priority[i] > priority[j]) {
                   out_action[j].detla_step = 0;    //此时i先走，i应检测前方.
                   qDebug()<<"_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_";
                   wait_number[j]++;                //j等待计数器加一.
@@ -135,19 +133,7 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
                     }
                   }
                 }
-              } /*else {                       //j不在i前方，预测ij下一时刻是否会撞
-                float L_number_step = 0.05;
-                float x_i = info[i].x + L_number_step*cos(A[i]);
-                float y_i = info[i].y + L_number_step*cos(A[i]);
-                float x_j = info[j].x + L_number_step*cos(A[j]);
-                float y_j = info[j].y + L_number_step*cos(A[j]);
-                float D_forecase = sqrt(pow(x_i-x_j, 2) + pow(y_i-y_j, 2));
-                if (D_forecase < 0.18) {
-                  out_action[j].detla_step = 0;
-                  out_action[j].delta_theta = out_action[i].delta_theta + M_PI/2;
-                  wait_number[j]++;
-                }
-              }*/
+              }
             }
           }
         }
@@ -162,20 +148,16 @@ int TrajectoryPlanner::Plan(xpider_opti_t info[], int info_len, xpider_tp_t out_
       wait_number[i] = 0;
       out_action[i].detla_step = 2;
       out_action[i].delta_theta = A[i] + M_PI/2;
+      float x1 = info[i].x + L*cos(out_action[i].delta_theta);
+      float y1 = info[i].y + L*sin(out_action[i].delta_theta);
       for(int j=0; j<info_len; j++) {
-        float x1 = info[j].x + L*cos(A[i]);
-        float y1 = info[j].y + L*sin(A[i]);
-        for (int k = 0; k<info_len; k++) {
-          float r = sqrt(pow(info[k].x - x1, 2) + pow(info[k].y - y1, 2));
-          if (r < R) {
-            out_action[j].detla_step = 0;
-            out_action[j].delta_theta = out_action[i].delta_theta + M_PI/2;
-            A[j] = A[j] + M_PI/2;
-          }
+        float dis = sqrt(pow(info[j].x - x1, 2) + pow(info[j].y - y1, 2));
+        if (dis < R) {
+          out_action[i].detla_step = 0;
         }
       }
     }
-  }
+  }*/
 
   //打印输出结果
   for (int i=0; i<info_len; i++){

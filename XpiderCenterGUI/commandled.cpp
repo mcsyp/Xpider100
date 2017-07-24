@@ -97,7 +97,7 @@ bool CommandLed::Exec(QStringList argv){
         info.right_led_rgb[0]=right[0];
         info.right_led_rgb[1]=right[1];
         info.right_led_rgb[2]=right[2];
-        qDebug()<<tr("[%1,%2] %3,%4,%5,%6,%7,%8").arg(__FILE__).arg(__LINE__).arg(left[0]).arg(left[1]).arg(left[2]).arg(right[0]).arg(right[1]).arg(right[2]);
+        //qDebug()<<tr("[%1,%2] %3,%4,%5,%6,%7,%8").arg(__FILE__).arg(__LINE__).arg(left[0]).arg(left[1]).arg(left[2]).arg(right[0]).arg(right[1]).arg(right[2]);
 
         protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
         tx_pack.append((char*)tx_buffer,tx_length);

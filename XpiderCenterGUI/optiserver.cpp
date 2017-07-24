@@ -22,7 +22,7 @@ OptiService::OptiService(QObject *parent) :QTcpServer(parent)
   connect(this,SIGNAL(newConnection()),this,SLOT(onNewConnection()));
   connect(&protocol_,SIGNAL(PayloadReady(int,QByteArray&)),
           this,SLOT(onPayloadReady(int,QByteArray&)));
-  connect(&timer_socket_state_,SIGNAL(timeout()),this,SLOT(onXpiderSocketStateTimeout()));
+  connect(&timer_opti_info_,SIGNAL(timeout()),this,SLOT(onOptiUpdateTimeout()));
 
   time_.start();
 
@@ -109,10 +109,13 @@ int OptiService::StartService(){
   }while(0);
 
   //init universal retry timer
-  timer_retry_.start(XPIDER_RETRY_TIMEOUT);
-  timer_socket_state_.start(XPIDER_ALIVE_TIMEOUT);
+  timer_opti_info_.start(OPTI_UPDATE_TIMEOUT);
+  timer_retry_.start(XpiderSocketThread::XPIDER_RETRY_TIMEOUT);
   //clear the target mask
   ui_target_mask_.clear();
+  this->opti_info_list_.clear();
+  this->is_updating_opti_ = false;
+
   return this->serverPort();
 }
 
@@ -155,9 +158,8 @@ void OptiService::onNewConnection(){
 
 void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
   if(SERVER_UPLAOD_REQ==cmdid){
-    std::vector<xpider_opti_t> opti_info_list;
-    opti_info_list.clear();
-
+    is_updating_opti_=true;
+    opti_info_list_.clear();
     //step1.parse the payload infomation
     do{
       QTextStream stream;
@@ -177,118 +179,103 @@ void OptiService::onPayloadReady(int cmdid,QByteArray & payload){
         opti_info.theta = value_list[2].toFloat();
 
         //save to list
-        opti_info_list.push_back(opti_info);
+        opti_info_list_.push_back(opti_info);
       }
     }while(0);
-
-
-    //step2. compute the available xpider id list
-    const int id_size = XpiderSocketThread::socket_list_.size();
-    uint32_t id_array[id_size];
-    int id_len=AvailableXpiderSocketID(id_array,id_size);
-
-    QMap<QString, xpider_opti_t> connected_xpider_map;
-    //step3.call tracing processor
-    if(opti_info_list.size() && id_len>0){
-      //step1. match all xpiders
-      ptr_planner_thread_->xpider_queue_.clear();
-      ptr_location_->GetRobotLocation(opti_info_list,id_array,id_len,ptr_planner_thread_->xpider_queue_);
-
-      //step2. match all targets
-      SyncXpiderTarget(ptr_planner_thread_->xpider_queue_);
-
-      for(int i=0;i<ptr_planner_thread_->xpider_queue_.size();++i){
-        xpider_opti_t xpider = ptr_planner_thread_->xpider_queue_[i];
-        //also save it to a list, but only pointer
-        if(xpider.id>=0){//to find the real xpdier
-          QString str_key = PointToString(QPointF(xpider.x,xpider.y));
-          connected_xpider_map.insert(str_key,xpider);//we are using point as an KEY of the xpider!!
-        }
-      }
-    }
-
-    //step4. wrap in JSON and push to signal
-    do{
-      QJsonDocument jdoc;
-      QJsonArray jarray;
-      for(auto iter = opti_info_list.begin();iter!=opti_info_list.end();++iter){
-        xpider_opti_t raw = *iter;
-        QJsonObject jobj;
-
-        jobj["theta"]= raw.theta;
-        jobj["x"] = raw.x;
-        jobj["y"] = raw.y;
-        jobj["label"] = "UN";
-        jobj["selected"] = false;
-        //update ID
-        //HASH MAP checking is MUCH MUCH faster!!
-        QString str_key = PointToString(QPointF(raw.x,raw.y));
-        if(connected_xpider_map.contains(str_key)){
-          xpider_opti_t value = connected_xpider_map.value(str_key);
-          jobj["id"]=static_cast<int>(value.id);
-          if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
-             //if this xpider is a socket connected xpider!!!!
-             //its label has a different name
-             XpiderSocketThread * x_socket = XpiderSocketThread::socket_list_[static_cast<int>(value.id)];
-             QString host_name = x_socket->Hostname();
-             jobj["label"]=host_name.split(".").last();
-             jobj["selected"] = x_socket->ui_selected_;
-
-             //update its landmark positiond
-             ptr_location_->UpdateLandmark(value.id,value.x,value.y);
-          }
-          jobj["target_x"] = value.target_x;
-          jobj["target_y"] = value.target_y;
-        }else{
-           jobj["id"]=-1;
-           jobj["target_x"] = 0;
-           jobj["target_y"] = 0;
-        }
-
-        //save to JARRAY
-        jarray.push_back(jobj);
-      }
-      jdoc.setArray(jarray);
-
-      //update xpiders landmarks
-      UpdateJSONEncodeLandmarks();
-      emit xpiderListUpdate(QString(jdoc.toJson()));
-    }while(0);
-
-
-    //step5. check if we need to update all xpiders' plan
-    int current_time = time_.elapsed();
-    if(current_time-last_trigger_>INTERVAL_POST_TASK && is_planner_running_ && ptr_planner_thread_){
-      //every 5sec
-      last_trigger_ = current_time;
-      ptr_planner_thread_->start();
-    }
-
-    }//end if(SERVER_UPLAOD_REQ==cmdid)
+    is_updating_opti_=false;
+  }//end if(SERVER_UPLAOD_REQ==cmdid)
 }
 
-void OptiService::onXpiderSocketStateTimeout()
+void OptiService::onOptiUpdateTimeout()
 {
-  static int last_len=0;
+  if(is_updating_opti_)return;
+  //qDebug()<<tr("[%1,%2] optilist_:%3 update").arg(__FILE__).arg(__LINE__).arg(opti_info_list_.size());
+  //step2. compute the available xpider id list
   const int id_size = XpiderSocketThread::socket_list_.size();
   uint32_t id_array[id_size];
   int id_len=AvailableXpiderSocketID(id_array,id_size);
-  if(id_len!=last_len){
-      last_len=id_len;
+  static int last_id_len=0;
+  if(id_len!=last_id_len){
+      last_id_len=id_len;
       emit xpiderAliveUpdate(id_len);
   }
 
-  QJsonDocument jdoc;
-  QJsonArray jarray;
-  for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
-    XpiderSocketThread* sock = XpiderSocketThread::socket_list_.at(i);
-    QJsonObject jobj;
-    jobj["hostname"] = sock->Hostname();
-    jobj["hb"] = sock->HbCounter();
-    jarray.append(jobj);
+  QMap<QString, xpider_opti_t> connected_xpider_map;
+  //step3.call tracing processor
+  if(opti_info_list_.size() && id_len>0){
+    //step1. match all xpiders
+    ptr_planner_thread_->xpider_queue_.clear();
+    ptr_location_->GetRobotLocation(opti_info_list_,id_array,id_len,ptr_planner_thread_->xpider_queue_);
+
+    //step2. match all targets
+    SyncXpiderTarget(ptr_planner_thread_->xpider_queue_);
+
+    for(int i=0;i<ptr_planner_thread_->xpider_queue_.size();++i){
+      xpider_opti_t xpider = ptr_planner_thread_->xpider_queue_[i];
+      //also save it to a list, but only pointer
+      if(xpider.id>=0){//to find the real xpdier
+        QString str_key = PointToString(QPointF(xpider.x,xpider.y));
+        connected_xpider_map.insert(str_key,xpider);//we are using point as an KEY of the xpider!!
+      }
+    }
   }
-  jdoc.setArray(jarray);
-  emit updateXpiderSocket(QString(jdoc.toJson()));
+
+  //step4. wrap in JSON and push to signal
+  do{
+    QJsonDocument jdoc;
+    QJsonArray jarray;
+    for(auto iter = opti_info_list_.begin();iter!=opti_info_list_.end();++iter){
+      xpider_opti_t raw = *iter;
+      QJsonObject jobj;
+
+      jobj["theta"]= raw.theta;
+      jobj["x"] = raw.x;
+      jobj["y"] = raw.y;
+      jobj["label"] = "UN";
+      jobj["selected"] = false;
+      //update ID
+      //HASH MAP checking is MUCH MUCH faster!!
+      QString str_key = PointToString(QPointF(raw.x,raw.y));
+      if(connected_xpider_map.contains(str_key)){
+        xpider_opti_t value = connected_xpider_map.value(str_key);
+        jobj["id"]=static_cast<int>(value.id);
+        if(value.id>=0 || value.id<XpiderSocketThread::socket_list_.size()){
+           //if this xpider is a socket connected xpider!!!!
+           //its label has a different name
+           XpiderSocketThread * x_socket = XpiderSocketThread::socket_list_[static_cast<int>(value.id)];
+           QString host_name = x_socket->Hostname();
+           jobj["label"]=host_name.split(".").last();
+           jobj["selected"] = x_socket->ui_selected_;
+
+           //update its landmark positiond
+           //ptr_location_->UpdateLandmark(value.id,value.x,value.y);
+        }
+        jobj["target_x"] = value.target_x;
+        jobj["target_y"] = value.target_y;
+      }else{
+         jobj["id"]=-1;
+         jobj["target_x"] = 0;
+         jobj["target_y"] = 0;
+      }
+
+      //save to JARRAY
+      jarray.push_back(jobj);
+    }
+    jdoc.setArray(jarray);
+
+    //update xpiders landmarks
+    UpdateJSONEncodeLandmarks();
+    emit xpiderListUpdate(QString(jdoc.toJson()));
+  }while(0);
+
+
+  //step5. check if we need to update all xpiders' plan
+  int current_time = time_.elapsed();
+  if(current_time-last_trigger_>INTERVAL_POST_TASK && is_planner_running_ && ptr_planner_thread_){
+    //every 5sec
+    last_trigger_ = current_time;
+    ptr_planner_thread_->start();
+  }
 }
 
 void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)

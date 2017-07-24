@@ -29,6 +29,8 @@ Rectangle {
                                                         "z":10,
                                                         "visible":false,});
                 xpider_queue_.push(dynamic_comp_);
+                xpider_queue_[i].dev_id = i;
+                xpider_queue_[i].label_ = "x_"+(num)*Math.random(i);
             }
         }
     }
@@ -131,6 +133,13 @@ Rectangle {
 
     Connections{
         target: opti_server_
+        onOptitrackConnected :{
+            for(var i=0;i<xpider_queue_.length;++i){
+                xpider_queue_[i].visible = false;
+                target_queue_[i].visible = false;
+            }
+        }
+
         onXpiderListUpdate:{
             var xpider_list = JSON.parse(str_json);
             opti_counter_ = xpider_list.length;
@@ -145,8 +154,8 @@ Rectangle {
                     xpider_queue_[i].y = screen_pos[1];
                     var angle = (90-xpider.theta*180.0/Math.PI)%360
                     xpider_queue_[i].rotation=angle;
-                    xpider_queue_[i].dev_id = xpider.id;
-                    xpider_queue_[i].label_ = xpider.label;
+                    //xpider_queue_[i].dev_id = xpider.id;
+                    //xpider_queue_[i].label_ = xpider.label;
                     xpider_queue_[i].visible = true;
                     xpider_queue_[i].setSelected(xpider.id>=0 && xpider.selected);
 

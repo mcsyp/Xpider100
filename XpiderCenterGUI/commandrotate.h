@@ -12,7 +12,7 @@ public:
   static const QString KEY;//"rotate"
   static const QString ALL;//"all"
   static constexpr int MIN_LEN=3;
-  static constexpr int MIN_ROTATE_SPEED=60;
+  static constexpr int MIN_ROTATE_SPEED=0;
   static constexpr int MAX_ROTATE_SPEED=100;
 
   explicit CommandRotate(QObject *parent = 0);

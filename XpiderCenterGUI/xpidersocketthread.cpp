@@ -19,7 +19,7 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
   connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
 
-  connect(this,SIGNAL(triggerMessage(QByteArray)),this,SLOT(onMessageReady(QByteArray)));
+  //connect(this,SIGNAL(triggerMessage(QByteArray)),this,SLOT(onMessageReady(QByteArray)));
 
   //init id
   socket_list_.push_back(this);
@@ -50,7 +50,10 @@ void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
 }
 
 void XpiderSocketThread::SendMessage(QByteArray &raw_message){
-  emit triggerMessage(raw_message);
+  //emit triggerMessage(raw_message);
+  if(raw_message.size()){
+    hdlc_.frameDecode(raw_message,raw_message.size());
+  }
 }
 
 void XpiderSocketThread::onTimeoutRetry(){
@@ -65,8 +68,8 @@ void XpiderSocketThread::onTimeoutRetry(){
   }
 }
 
-
 void XpiderSocketThread::onConnected(){
+#if 0
   static uint64_t  rand_seed_counter=0;
   QByteArray tx_pack;
   uint8_t* tx_buffer;
@@ -97,7 +100,7 @@ void XpiderSocketThread::onConnected(){
   protocol.GetBuffer(protocol.kFrontLeds, &tx_buffer, &tx_length);
   tx_pack.append((char*)tx_buffer,tx_length);
   SendMessage(tx_pack);
-
+#endif
   //reset hb_counter
   this->hb_counter_ = 0;
 }
@@ -135,12 +138,6 @@ void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   write(tx_payload);
 }
 
-void XpiderSocketThread::onMessageReady(QByteArray raw_message){
-  if(raw_message.size()){
-    hdlc_.frameDecode(raw_message,raw_message.size());
-  }
-  qDebug()<<tr("[%1,%2]").arg(__FILE__).arg(__LINE__);
-}
 bool XpiderSocketThread::Available() const{
   //return ((state()==ConnectedState) && (hb_time_.elapsed()<RX_HB_TIMEOUT));
   return (state()==ConnectedState);
