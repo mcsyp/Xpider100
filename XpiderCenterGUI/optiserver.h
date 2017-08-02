@@ -33,10 +33,10 @@ public:
   static constexpr int XPIDER_ROTATE_SPEED=100;
   static constexpr float XPIDER_MIN_TARGET_DISTANCE=0.05;//in [meter], and use Manhatton distance
 
-  static constexpr float XPIDER_INIT_SQUARE_X=0.0f;
-  static constexpr float XPIDER_INIT_SQUARE_Y=0.5f;
-  static constexpr int   XPIDER_INIT_SQUARE_ROWS=4;
-  static constexpr int   XPIDER_INIT_SQUARE_COLS=16;
+  static constexpr float XPIDER_INIT_SQUARE_X= 0.0f;
+  static constexpr float XPIDER_INIT_SQUARE_Y=-0.7f;
+  static constexpr int   XPIDER_INIT_SQUARE_ROWS=5;
+  static constexpr int   XPIDER_INIT_SQUARE_COLS=10;
 
   static constexpr int XPIDER_ALIVE_TIMEOUT=1000;
   static constexpr int OPTI_UPDATE_TIMEOUT=33;

@@ -9,8 +9,8 @@ Rectangle {
     property var cross_queue_ : new Array()
 
     property var max_xpider_num_:100
-    property var real_width_:4.5 //3 meter
-    property var real_height_:4.5 //2 meter
+    property var real_width_:5 //3 meter
+    property var real_height_:5 //2 meter
 
     property var reset_pos_:-500
     property var selected_xpider_index_:-1
@@ -29,8 +29,8 @@ Rectangle {
                                                         "z":10,
                                                         "visible":false,});
                 xpider_queue_.push(dynamic_comp_);
-                xpider_queue_[i].dev_id = i;
-                xpider_queue_[i].label_ = "x_"+(num)*Math.random(i);
+//                xpider_queue_[i].dev_id = i;
+//                xpider_queue_[i].label_ = "x_"+(num)*Math.random(i);
             }
         }
     }
@@ -133,12 +133,12 @@ Rectangle {
 
     Connections{
         target: opti_server_
-        onOptitrackConnected :{
-            for(var i=0;i<xpider_queue_.length;++i){
-                xpider_queue_[i].visible = false;
-                target_queue_[i].visible = false;
-            }
-        }
+//        onOptitrackConnected :{
+//            for(var i=0;i<xpider_queue_.length;++i){
+//                xpider_queue_[i].visible = false;
+//                target_queue_[i].visible = false;
+//            }
+//        }
 
         onXpiderListUpdate:{
             var xpider_list = JSON.parse(str_json);
@@ -154,8 +154,8 @@ Rectangle {
                     xpider_queue_[i].y = screen_pos[1];
                     var angle = (90-xpider.theta*180.0/Math.PI)%360
                     xpider_queue_[i].rotation=angle;
-                    //xpider_queue_[i].dev_id = xpider.id;
-                    //xpider_queue_[i].label_ = xpider.label;
+                    xpider_queue_[i].dev_id = xpider.id;
+                    xpider_queue_[i].label_ = xpider.label;
                     xpider_queue_[i].visible = true;
                     xpider_queue_[i].setSelected(xpider.id>=0 && xpider.selected);
 

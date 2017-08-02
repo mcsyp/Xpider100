@@ -6,8 +6,8 @@
 #include "global_xpider.h"
 
 #define ROBOT_LOOSE_FRAME_COUNT 260
-#define MARKER_MAX_DISTANCE 0.03f
-#define ROBOT_PLACE_WIDTH 0.2
+#define MARKER_MAX_DISTANCE 0.05f
+#define ROBOT_PLACE_WIDTH 0.25
 
 class XpiderLocation {
 public:
