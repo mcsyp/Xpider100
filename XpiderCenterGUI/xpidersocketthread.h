@@ -23,8 +23,8 @@ public:
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
 
-  static constexpr int XPIDER_RETRY_TIMEOUT=2000;
-  static constexpr int RX_HB_TIMEOUT=1500;//10sec
+  static constexpr int XPIDER_RETRY_TIMEOUT=1000;
+  static constexpr int RX_HB_TIMEOUT=2000;//10sec
   static constexpr int RX_HB_MAX=100000;
   static constexpr int TX_HB_TIMEOUT=5000;
 
@@ -53,6 +53,7 @@ public slots:
   void onConnected();
   void onDisconnected();
   void onReadyRead();
+  void onError(QAbstractSocket::SocketError);
 
   void onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size);
   void onHdlcEncodedByte(QByteArray encoded_data);

@@ -66,8 +66,6 @@ void TrajectoryThread::run(){
       }else{
         socket->StopWalking();
       }
-
     }
   }
-
 }
