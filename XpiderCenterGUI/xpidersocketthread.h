@@ -23,7 +23,7 @@ public:
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
 
-  static constexpr int XPIDER_RETRY_TIMEOUT=3000;
+  static constexpr int XPIDER_RETRY_TIMEOUT=2000;
   static constexpr int RX_HB_TIMEOUT=2000;//10sec
   static constexpr int RX_HB_MAX=100000;
   static constexpr int TX_HB_TIMEOUT=5000;
@@ -59,7 +59,7 @@ public slots:
   void onHdlcEncodedByte(QByteArray encoded_data);
 protected:
   //QTimer timer_retry_;
-  QTime hb_time_;
+  QTimer hb_time_;
 
   QString host_name_;
   int host_port_;

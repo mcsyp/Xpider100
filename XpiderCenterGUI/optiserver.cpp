@@ -94,7 +94,7 @@ int OptiService::StartService(){
       if(socket){
         QString name = xpider_host_list_[i];
         socket->StartConnection(name,host_port);
-        connect(&timer_retry_,SIGNAL(timeout()),socket,SLOT(onTimeoutRetry()));
+        // connect(&timer_retry_,SIGNAL(timeout()),socket,SLOT(onTimeoutRetry()));
       }
     }
   }while(0);

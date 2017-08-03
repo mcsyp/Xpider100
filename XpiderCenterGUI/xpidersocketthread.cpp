@@ -17,10 +17,11 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
 
   connect(this,SIGNAL(connected()),this,SLOT(onConnected()));
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
-  connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
+  // connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
   connect(this, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
 
   //connect(this,SIGNAL(triggerMessage(QByteArray)),this,SLOT(onMessageReady(QByteArray)));
+  connect(&hb_time_, SIGNAL(timeout()), this, SLOT(onTimeoutRetry()));
 
   //init id
   socket_list_.push_back(this);
@@ -45,7 +46,7 @@ void XpiderSocketThread::StartConnection(QString &host_name, int host_port){
   host_name_ = host_name;
   host_port_ = host_port;
 
-  hb_time_.start();
+  hb_time_.start(XPIDER_RETRY_TIMEOUT);
 
   event_thread_.start();
 }
@@ -59,22 +60,23 @@ void XpiderSocketThread::SendMessage(QByteArray &raw_message){
 
 void XpiderSocketThread::onTimeoutRetry(){
   if(state()==UnconnectedState){
-    qDebug() << tr("[%1,%2]connecting to %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
+    // qDebug() << tr("[%1,%2]connecting to %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
     setSocketOption(QTcpSocket::LowDelayOption, 1);
     setSocketOption(QTcpSocket::KeepAliveOption, 1);
     connectToHost(host_name_, host_port_);
-    if(waitForConnected(3000) == false) {
-      qDebug() << tr("[%1,%2]connect failed %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
-      abort();
-    }
+//    if(waitForConnected(3000) == false) {
+//      // qDebug() << tr("[%1,%2]connect failed %3:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(host_port_);
+//      abort();
+//    }
   }else if(state()==ConnectedState){
-    QByteArray hb_data = QByteArray::fromHex("FFFFFFFF");
+    QByteArray hb_data = QByteArray::fromHex("F1");
     SendMessage(hb_data);
 //    QByteArray payload;
 //    payload=QString("    ").toUtf8();
 //    payload.insert(0,XPIDER_MESSAGE_HEAD);
 //    write(payload);
   }
+  // qDebug() << tr("[%1,%2]%3 net status: %4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(state());
 }
 
 void XpiderSocketThread::onError(QAbstractSocket::SocketError error_code) {
@@ -134,24 +136,24 @@ void XpiderSocketThread::onReadyRead(){
 
 void XpiderSocketThread::onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size){
   static int last_hb_counter=0;
-  if(hb_time_.elapsed()>RX_HB_TIMEOUT){
-    hb_counter_=0;
-  }
-  hb_time_.restart();
-  hb_counter_ = (hb_counter_+1)%RX_HB_MAX;
-  if(hb_counter_!=last_hb_counter){
-    // qDebug()<<tr("[%1,%2] %3 hb counter:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(hb_counter_);
-    last_hb_counter = hb_counter_;
-  }
+//  if(hb_time_.elapsed()>RX_HB_TIMEOUT){
+//    hb_counter_=0;
+//  }
+//  hb_time_.restart();
+//  hb_counter_ = (hb_counter_+1)%RX_HB_MAX;
+//  if(hb_counter_!=last_hb_counter){
+//    // qDebug()<<tr("[%1,%2] %3 hb counter:%4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(hb_counter_);
+//    last_hb_counter = hb_counter_;
+//  }
 }
 void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   QByteArray tx_payload;
   tx_payload.append(XPIDER_MESSAGE_HEAD);
   tx_payload.append(encoded_data);
   write(tx_payload);
-  if(tx_payload.size() != 10) {
-     qDebug()<<tr("[%1,%2] %3 sending: %4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(tx_payload.size());
-  }
+  // if(tx_payload.size() != 10) {
+     // qDebug()<<tr("[%1,%2] %3 sending: %4").arg(__FILE__).arg(__LINE__).arg(host_name_).arg(tx_payload.size());
+  // }
 }
 
 bool XpiderSocketThread::Available() const{
