@@ -88,11 +88,18 @@ int OptiService::StartService(){
     }
     ip_file.close();
 
-    const int host_port=80;
+    int host_port=80;
     for(int i=0;i<xpider_host_list_.size();++i){
       XpiderSocketThread * socket = new XpiderSocketThread();
       if(socket){
         QString name = xpider_host_list_[i];
+        if(name.startsWith("+")) {
+          host_port = 8899;
+          name.remove("+");
+          qDebug() << "Special Wifi Module" << name;
+        } else {
+          host_port = 80;
+        }
         socket->StartConnection(name,host_port);
         // connect(&timer_retry_,SIGNAL(timeout()),socket,SLOT(onTimeoutRetry()));
       }
