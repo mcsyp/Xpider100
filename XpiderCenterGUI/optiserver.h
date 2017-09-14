@@ -27,7 +27,7 @@ protected:
 public:
   static constexpr int SERVER_PORT= 8000;//this server works at this port.
   static constexpr int RX_MAX_SIZE= 6000;
-  static constexpr int INTERVAL_POST_TASK=1000;
+  static constexpr int INTERVAL_POST_TASK=800;
 
   static constexpr int XPIDER_WALK_SPEED=95;
   static constexpr int XPIDER_ROTATE_SPEED=100;
