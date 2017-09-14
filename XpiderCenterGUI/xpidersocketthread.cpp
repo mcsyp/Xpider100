@@ -69,7 +69,7 @@ void XpiderSocketThread::onTimeoutRetry(){
 //      abort();
 //    }
   }else if(state()==ConnectedState){
-    QByteArray hb_data = QByteArray::fromHex("F1");
+    QByteArray hb_data = QByteArray::fromHex("FFFFFFFF");
     SendMessage(hb_data);
 //    QByteArray payload;
 //    payload=QString("    ").toUtf8();
