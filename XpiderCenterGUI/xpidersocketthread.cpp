@@ -17,7 +17,7 @@ XpiderSocketThread::XpiderSocketThread(QObject* parent):QTcpSocket(parent){
 
   connect(this,SIGNAL(connected()),this,SLOT(onConnected()));
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
-  // connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
+  connect(this,SIGNAL(readyRead()),this,SLOT(onReadyRead()));
   connect(this, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
 
   //connect(this,SIGNAL(triggerMessage(QByteArray)),this,SLOT(onMessageReady(QByteArray)));
@@ -137,6 +137,10 @@ void XpiderSocketThread::onReadyRead(){
 void XpiderSocketThread::onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size){
   if(decoded_data.at(0) == XpiderProtocol::kHeartBeat) {
     hb_counter_ += 1;
+    int16_t temp_voltage;
+    memcpy(&temp_voltage, decoded_data.data()+5, 2);
+    voltage_ = static_cast<float>(temp_voltage/100.0f);
+    // qDebug() << host_name_ << "get heartbeat";
   } else {
     qDebug() << host_name_ << "receive wrong heartbeat";
   }

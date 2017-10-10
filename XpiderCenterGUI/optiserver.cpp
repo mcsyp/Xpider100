@@ -285,9 +285,12 @@ void OptiService::onOptiUpdateTimeout()
   }
 
   QVariantMap hb_map;
+  QString temp_message;
   for(int i=0; i<XpiderSocketThread::socket_list_.size(); i++) {
-    hb_map.insert( XpiderSocketThread::socket_list_[i]->Hostname(),
-                    XpiderSocketThread::socket_list_[i]->HbCounter());
+    temp_message.clear();
+    temp_message += QString::number(XpiderSocketThread::socket_list_[i]->Voltage(), 'f', 2);
+    temp_message += QString(", %1").arg(XpiderSocketThread::socket_list_[i]->HbCounter());
+    hb_map.insert( XpiderSocketThread::socket_list_[i]->Hostname(), temp_message);
   }
   emit updateXpiderSocket(hb_map);
 }

@@ -6,16 +6,11 @@ import QtQuick.Controls 2.0
 
 Window {
   id: xpider_status
-  width: 300
-  height: 800
+  width: 400
+  height: 900
 
   ListModel{
     id:xpider_socket_model
-  }
-
-  Text{
-    id:list_txt_components
-
   }
 
   ListView {
@@ -23,6 +18,7 @@ Window {
     model:xpider_socket_model
     delegate: Text {
       text: model.hostname + ":\t" + model.heartbeat
+      font.pointSize: 12
     }
   }
 

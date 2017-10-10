@@ -23,7 +23,7 @@ public:
   static const QByteArray XPIDER_MESSAGE_HEAD;
   static constexpr int XPIDER_MESSAGE_LEN=2;
 
-  static constexpr int XPIDER_RETRY_TIMEOUT=2000;
+  static constexpr int XPIDER_RETRY_TIMEOUT=3000;
   static constexpr int RX_HB_TIMEOUT=2000;//10sec
   static constexpr int RX_HB_MAX=100000;
   static constexpr int TX_HB_TIMEOUT=5000;
@@ -43,8 +43,9 @@ public:
   bool Available() const;
 
   void StopWalking();
-  QString Hostname()const{ return host_name_;}
-  int HbCounter()const{return hb_counter_;}
+  QString Hostname() const{ return host_name_; }
+  int HbCounter() const{ return hb_counter_; }
+  float Voltage() const { return voltage_; }
 signals:
   void aliveStateChange(bool alive,const XpiderSocketThread* socket);
 public slots:
@@ -68,6 +69,7 @@ protected:
   QThread event_thread_;
 
   int hb_counter_;
+  float voltage_;
 
   QByteArray rx_data_;
 public:
