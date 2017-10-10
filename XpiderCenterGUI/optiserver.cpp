@@ -255,7 +255,7 @@ void OptiService::onOptiUpdateTimeout()
            jobj["selected"] = x_socket->ui_selected_;
 
            //update its landmark positiond
-           //ptr_location_->UpdateLandmark(value.id,value.x,value.y);
+           ptr_location_->UpdateLandmark(value.id,value.x,value.y);
         }
         jobj["target_x"] = value.target_x;
         jobj["target_y"] = value.target_y;
@@ -283,6 +283,13 @@ void OptiService::onOptiUpdateTimeout()
     last_trigger_ = current_time;
     ptr_planner_thread_->start();
   }
+
+  QVariantMap hb_map;
+  for(int i=0; i<XpiderSocketThread::socket_list_.size(); i++) {
+    hb_map.insert( XpiderSocketThread::socket_list_[i]->Hostname(),
+                    XpiderSocketThread::socket_list_[i]->HbCounter());
+  }
+  emit updateXpiderSocket(hb_map);
 }
 
 void OptiService::SyncXpiderTarget(std::vector<xpider_opti_t> &xpider_list)
@@ -355,7 +362,7 @@ void OptiService::removeTarget(unsigned int id){
   if(x)x->StopWalking();
 }
 
-void OptiService::clearTargets(){
+void OptiService::clearTargets() {
   XpiderSocketThread::XpiderList & xpider_list = XpiderSocketThread::socket_list_;
   ui_target_mask_.clear();
   for(auto iter=xpider_list.begin();iter!=xpider_list.end();++iter){
@@ -366,11 +373,11 @@ void OptiService::clearTargets(){
   }
 }
 
-void OptiService::enablePlanner(bool b){
+void OptiService::enablePlanner(bool b) {
   is_planner_running_ = b;
 }
 
-void OptiService::uiSelectXpider(int id, bool select){
+void OptiService::uiSelectXpider(int id, bool select) {
   if(id>=0 && id<XpiderSocketThread::socket_list_.size()){
     for(int i=0;i<XpiderSocketThread::socket_list_.size();++i){
       XpiderSocketThread* x_sock = XpiderSocketThread::socket_list_.at(i);
@@ -381,7 +388,7 @@ void OptiService::uiSelectXpider(int id, bool select){
   }
 }
 
-void OptiService::runCommandText(QString cmd_text){
+void OptiService::runCommandText(QString cmd_text) {
   qDebug()<<tr("[%1,%2] command text is:%3").arg(__FILE__).arg(__LINE__).arg(cmd_text);
   ptr_cmd_thread_->StartCommandChain(cmd_text);
 }
@@ -440,10 +447,8 @@ bool OptiService::csvSaveTargets(QString path)
 }
 
 void OptiService::resetLandmarks(){
-  float cx,cy;
-  uint8_t rows,cols;
-  ptr_location_->GetInitialMatrixInfo(cx,cy,rows,cols);
-  ptr_location_->GenerateInitLocation(cx,cy,rows,cols);
+  ptr_location_->GenerateInitLocation(XPIDER_INIT_SQUARE_X,
+                                      XPIDER_INIT_SQUARE_Y,
+                                      XPIDER_INIT_SQUARE_ROWS,
+                                      XPIDER_INIT_SQUARE_COLS);
 }
-
-

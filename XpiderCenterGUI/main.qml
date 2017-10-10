@@ -247,4 +247,13 @@ ApplicationWindow {
          }
     }
 
+    Component.onCompleted: {
+      var component = Qt.createComponent("XpiderSocketList.qml");
+      if(component.status===Component.Ready) {
+        var dynamic_comp_ = component.createObject(main_window_,
+                                               {"x":0,
+                                                "y":0,
+                                                "visible":true});
+      }
+    }
 }

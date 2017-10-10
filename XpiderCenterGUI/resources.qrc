@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/angle_2.png</file>
+        <file>images/angle.png</file>
+        <file>images/cross.png</file>
+        <file>images/selected.png</file>
+        <file>images/spider_2.png</file>
+        <file>images/spider.png</file>
+        <file>images/start_frame.png</file>
+        <file>images/start.png</file>
+        <file>images/stop_frame.png</file>
+        <file>images/stop.png</file>
+        <file>images/target.png</file>
+        <file>images/xpider_icon.png</file>
+    </qresource>
+</RCC>

@@ -135,17 +135,13 @@ void XpiderSocketThread::onReadyRead(){
 }
 
 void XpiderSocketThread::onHdlcDecodedByte(QByteArray decoded_data, quint16 decoded_size){
-  static int last_hb_counter=0;
-//  if(hb_time_.elapsed()>RX_HB_TIMEOUT){
-//    hb_counter_=0;
-//  }
-//  hb_time_.restart();
-//  hb_counter_ = (hb_counter_+1)%RX_HB_MAX;
-//  if(hb_counter_!=last_hb_counter){
-//    // qDebug()<<tr("[%1,%2] %3 hb counter:%4").arg(__FILE_ _).arg(__LINE__).arg(host_name_).arg(hb_counter_);
-//    last_hb_counter = hb_counter_;
-//  }
+  if(decoded_data.at(0) == XpiderProtocol::kHeartBeat) {
+    hb_counter_ += 1;
+  } else {
+    qDebug() << host_name_ << "receive wrong heartbeat";
+  }
 }
+
 void XpiderSocketThread::onHdlcEncodedByte(QByteArray encoded_data){
   QByteArray tx_payload;
   //tx_payload.append(XPIDER_MESSAGE_HEAD);

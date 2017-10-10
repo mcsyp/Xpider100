@@ -26,13 +26,14 @@ void XpiderLocation::GenerateInitLocation(float center_x, float center_y, uint8_
     }
   }
 
-  for(uint8_t ii=0; ii<rows*cols; ii++) {
-    qDebug() << "id: " << ii << ", x: " << initialize_points_[ii].x << "y:" << initialize_points_[ii].y;
-  }
   this->center_x_ = center_x;
   this->center_y_ = center_y;
   this->rows_ = rows;
   this->cols_ = cols;
+
+  //  for(uint8_t ii=0; ii<rows*cols; ii++) {
+  //    qDebug() << "id: " << ii << ", x: " << initialize_points_[ii].x << "y:" << initialize_points_[ii].y;
+  //  }
 }
 
 void XpiderLocation::UpdateLandmark(int index, float x, float y){

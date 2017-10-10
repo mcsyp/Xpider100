@@ -79,7 +79,7 @@ signals:
   void optitrackConnected(bool connected);
   void xpiderAliveUpdate(int number);
 
-  void updateXpiderSocket(QString str_json);
+  void updateXpiderSocket(QVariantMap map);
 protected:
   static OptiService* ptr_instance;
 protected slots:

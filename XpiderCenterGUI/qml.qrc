@@ -1,24 +1,11 @@
 <RCC>
-    <qresource prefix="/">
-        <file>qtquickcontrols2.conf</file>
-        <file>main.qml</file>
-        <file>Playground.qml</file>
-        <file>Xpider.qml</file>
-        <file>images/xpider_icon.png</file>
-        <file>images/angle_2.png</file>
-        <file>images/angle.png</file>
-        <file>images/selected.png</file>
-        <file>images/spider.png</file>
-        <file>images/start_frame.png</file>
-        <file>images/start.png</file>
-        <file>images/stop_frame.png</file>
-        <file>images/stop.png</file>
-        <file>images/target.png</file>
-        <file>Target.qml</file>
-        <file>Cross.qml</file>
-        <file>images/cross.png</file>
-        <file>images/spider_2.png</file>
-        <file>CommandPanel.qml</file>
-        <file>XpiderSocketList.qml</file>
-    </qresource>
+  <qresource prefix="/">
+    <file>main.qml</file>
+    <file>Playground.qml</file>
+    <file>Xpider.qml</file>
+    <file>Target.qml</file>
+    <file>Cross.qml</file>
+    <file>CommandPanel.qml</file>
+    <file>XpiderSocketList.qml</file>
+  </qresource>
 </RCC>
